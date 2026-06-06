@@ -1,0 +1,172 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Selection color */
+::selection {
+  background-color: rgba(99, 102, 241, 0.2);
+}
+
+/* Animations */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+/* Chart tooltip overrides */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: #f0f0f0;
+}
+
+/* Base styles override for Dark Mode */
+.dark body,
+.dark .min-h-screen.bg-gray-50,
+.dark .bg-gray-50 {
+  background-color: #0b0f19 !important;
+  color: #f3f4f6 !important;
+}
+
+.dark .bg-white,
+.dark .bg-white\/80 {
+  background-color: #121826 !important;
+  color: #f3f4f6 !important;
+}
+
+.dark header {
+  background-color: rgba(11, 15, 25, 0.8) !important;
+  border-color: #1f293d !important;
+}
+
+.dark .text-gray-900,
+.dark .text-gray-950,
+.dark .text-slate-900,
+.dark .text-slate-950 {
+  color: #f3f4f6 !important;
+}
+
+.dark .text-gray-500,
+.dark .text-gray-400,
+.dark .text-slate-450,
+.dark .text-slate-500 {
+  color: #9ca3af !important;
+}
+
+.dark .border-gray-100,
+.dark .border-gray-200,
+.dark .border-slate-100,
+.dark .border-slate-200 {
+  border-color: #1f293d !important;
+}
+
+.dark .bg-gray-100 {
+  background-color: #1f293d !important;
+}
+
+.dark .bg-white\/95 {
+  background-color: rgba(18, 24, 38, 0.95) !important;
+  border-color: #1f293d !important;
+}
+
+.dark input[type="text"],
+.dark input[type="password"],
+.dark input[type="email"],
+.dark input[type="url"],
+.dark select {
+  background-color: #1e293b !important;
+  color: #f3f4f6 !important;
+  border-color: #334155 !important;
+}
+
+.dark .bg-white.text-gray-700 {
+  background-color: #1e293b !important;
+  color: #f3f4f6 !important;
+  border-color: #334155 !important;
+}
+
+.dark .bg-white.text-gray-700:hover {
+  background-color: #334155 !important;
+}
+
+/* Badge styles in Dark Mode */
+.dark .bg-gray-100 { background-color: rgba(243, 244, 246, 0.1) !important; color: #e5e7eb !important; }
+.dark .bg-emerald-100 { background-color: rgba(16, 185, 129, 0.15) !important; color: #34d399 !important; }
+.dark .bg-amber-100 { background-color: rgba(245, 158, 11, 0.15) !important; color: #fbbf24 !important; }
+.dark .bg-red-100 { background-color: rgba(239, 68, 68, 0.15) !important; color: #f87171 !important; }
+.dark .bg-blue-100 { background-color: rgba(59, 130, 246, 0.15) !important; color: #60a5fa !important; color: #60a5fa !important; }
+.dark .bg-purple-100 { background-color: rgba(168, 85, 247, 0.15) !important; color: #c084fc !important; }
+
+/* Translucent pill backgrounds */
+.dark .bg-indigo-50 { background-color: rgba(99, 102, 241, 0.15) !important; color: #818cf8 !important; }
+.dark .bg-emerald-50 { background-color: rgba(16, 185, 129, 0.15) !important; color: #34d399 !important; }
+.dark .bg-purple-50 { background-color: rgba(168, 85, 247, 0.15) !important; color: #c084fc !important; }
+.dark .bg-amber-50 { background-color: rgba(245, 158, 11, 0.15) !important; color: #fbbf24 !important; }
+.dark .bg-pink-50 { background-color: rgba(236, 72, 153, 0.15) !important; color: #f472b6 !important; }
+.dark .bg-red-50 { background-color: rgba(239, 68, 68, 0.15) !important; color: #f87171 !important; }
+.dark .bg-blue-50 { background-color: rgba(59, 130, 246, 0.15) !important; color: #60a5fa !important; }
+
+.dark .bg-indigo-50\/40 {
+  background-color: rgba(99, 102, 241, 0.25) !important;
+}
+
+.dark .bg-slate-50\/20,
+.dark .bg-slate-50\/50,
+.dark .bg-slate-50 {
+  background-color: #1e293b !important;
+  color: #f3f4f6 !important;
+}
+
+.dark .border-slate-100,
+.dark .border-slate-200 {
+  border-color: #334155 !important;
+}
+
+.dark .text-slate-700,
+.dark .text-slate-800,
+.dark .text-slate-650 {
+  color: #f3f4f6 !important;
+}
+
+.dark .text-slate-300 {
+  color: #475569 !important;
+}
+
+/* Charts Dark Mode support */
+.dark .recharts-cartesian-grid-horizontal line,
+.dark .recharts-cartesian-grid-vertical line {
+  stroke: #1f293d !important;
+}
+.dark .recharts-text {
+  fill: #9ca3af !important;
+}
+
