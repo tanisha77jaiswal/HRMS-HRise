@@ -346,7 +346,7 @@ This is a computer generated document and does not require signatures.
 
           {/* Tab Renderers */}
           {activeTab === "dashboard" && (
-            <div className="space-y-8 animate-fade-in">
+            <div className="space-y-8 hrise-tab-content">
               {/* Corporate Identity Card */}
               <div className="bg-white rounded-2xl border border-gray-150 p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
                 <div className="flex items-center gap-4">
@@ -549,7 +549,7 @@ This is a computer generated document and does not require signatures.
           )}
 
           {activeTab === "profile" && (
-            <div className="bg-white rounded-2xl border border-gray-150 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-2xl border border-gray-150 shadow-sm overflow-hidden hrise-tab-content">
               <div className="bg-gradient-to-r from-indigo-800 to-purple-800 h-32 relative" />
               
               <div className="px-6 pb-8 relative">
@@ -711,7 +711,7 @@ This is a computer generated document and does not require signatures.
           )}
 
           {activeTab === "attendance" && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 hrise-tab-content">
               {/* Left clocking dashboard */}
               <div className="lg:col-span-1 space-y-6">
                 <div className="bg-white rounded-2xl border border-gray-150 p-6 shadow-sm flex flex-col items-center text-center">
@@ -853,7 +853,7 @@ This is a computer generated document and does not require signatures.
           )}
 
           {activeTab === "leaves" && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 hrise-tab-content">
               {/* Left Apply form */}
               <div className="lg:col-span-1 space-y-6">
                 {/* Leave balances */}
@@ -1026,7 +1026,7 @@ This is a computer generated document and does not require signatures.
           )}
 
           {activeTab === "payroll" && (
-            <div className="space-y-8">
+            <div className="space-y-8 hrise-tab-content">
               {/* Paycards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-white rounded-2xl border border-gray-150 p-6 shadow-sm flex items-center justify-between">
@@ -1184,7 +1184,7 @@ This is a computer generated document and does not require signatures.
           )}
 
           {activeTab === "performance" && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 hrise-tab-content">
               {/* Left Score circular/grade progress */}
               <div className="lg:col-span-1 space-y-6">
                 {/* Score Card */}

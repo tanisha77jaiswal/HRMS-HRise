@@ -169,7 +169,7 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* Stats Cards */}
-          <div className={`grid grid-cols-2 lg:grid-cols-5 gap-4 transition-opacity duration-300 ${loading ? "opacity-70" : "opacity-100"}`}>
+          <div className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 transition-opacity duration-300 ${loading ? "opacity-70" : "opacity-100"}`}>
             {cards.map((card) => (
               <div
                 key={card.label}
