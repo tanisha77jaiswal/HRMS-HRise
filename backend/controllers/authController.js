@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import { User } from "../models/userModel.js";
 import { ActivityLog } from "../models/activityLogModel.js";
 
@@ -208,3 +209,106 @@ export const refreshToken = async (req, res) => {
     res.status(500).json({ error: e.message });
   }
 };
+
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: "Email address is required." });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = await User.findOne({ email: normalizedEmail });
+    if (!user) {
+      return res.status(404).json({ error: "User with this email does not exist." });
+    }
+
+    // Generate token and expiration
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+
+    user.resetPasswordToken = hashedToken;
+    user.resetPasswordExpires = Date.now() + 15 * 60 * 1000; // 15 minutes
+    await user.save();
+
+    const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
+
+    // Print professional email frame in server terminal logs for dev/demo retrieval
+    console.log(`
+============================================================
+📧 [HRise Mailer] PASSWORD RESET REQUEST
+------------------------------------------------------------
+To: ${user.email}
+Time: ${new Date().toLocaleString()}
+Reset URL: ${resetUrl}
+Expires In: 15 minutes
+------------------------------------------------------------
+This is a secure password reset link for your account.
+If you did not make this request, please ignore this email.
+============================================================
+    `);
+
+    try {
+      await ActivityLog.create({
+        employeeEmail: user.email,
+        action: "Password Reset Link Sent",
+        details: "Forgot password link printed to server logs."
+      });
+    } catch (logErr) {
+      console.error("Failed to log activity:", logErr);
+    }
+
+    res.status(200).json({ message: "Password reset link has been sent to your email." });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+};
+
+export const resetPassword = async (req, res) => {
+  try {
+    const { token, password, confirmPassword } = req.body;
+    if (!token || !password || !confirmPassword) {
+      return res.status(400).json({ error: "Token, password, and confirmPassword are required." });
+    }
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({ error: "Passwords do not match." });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ error: "Password must be at least 8 characters long." });
+    }
+
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: "Reset Link Expired" });
+    }
+
+    // Update password
+    user.password = await bcrypt.hash(password, 10);
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    await user.save();
+
+    try {
+      await ActivityLog.create({
+        employeeEmail: user.email,
+        action: "Password Updated",
+        details: "Password was reset successfully using the reset token link."
+      });
+    } catch (logErr) {
+      console.error("Failed to log activity:", logErr);
+    }
+
+    res.status(200).json({ message: "Password updated successfully. Please login with your new password." });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+};
+

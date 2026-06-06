@@ -35,6 +35,8 @@ import ManagerAttendancePage from "./pages/ManagerAttendancePage";
 import ManagerLeavesPage from "./pages/ManagerLeavesPage";
 import ManagerPerformancePage from "./pages/ManagerPerformancePage";
 import ManagerAnalyticsPage from "./pages/ManagerAnalyticsPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import { syncFromBackend } from "./utils/sync";
 
 // ─── Role definitions ─────────────────────────────────────────────────────────
@@ -132,11 +134,22 @@ function AppContent() {
     );
   }
 
-  if (!user && location.pathname !== "/") return <Navigate to="/" replace />;
+  // Handle public routes for unauthenticated sessions
+  if (!user) {
+    return (
+      <Routes>
+        <Route path="/" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    );
+  }
+
+  // Redirect authenticated user if navigating to login page
   if (user && location.pathname === "/") {
     return <Navigate to={ROLE_HOME[user.role] ?? "/dashboard"} replace />;
   }
-  if (!user) return <LoginPage />;
 
   const ADMIN = [ROLES.MANAGEMENT_ADMIN];
   const HR    = [ROLES.MANAGEMENT_ADMIN, ROLES.RECRUITER];

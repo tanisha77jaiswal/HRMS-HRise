@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {
   Brain,
   Users,
@@ -1354,6 +1354,20 @@ export default function LoginPage() {
                               {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                             </button>
                           </div>
+                          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "5px" }}>
+                            <Link
+                              to="/forgot-password"
+                              style={{
+                                fontSize: "0.7rem",
+                                color: isCandidate ? "#10b981" : "#6366f1",
+                                textDecoration: "none",
+                                fontWeight: "600",
+                                transition: "all 0.2s"
+                              }}
+                            >
+                              Forgot Password?
+                            </Link>
+                          </div>
                         </div>
 
                         <button
@@ -1531,6 +1545,20 @@ export default function LoginPage() {
                           >
                             {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                           </button>
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "5px" }}>
+                          <Link
+                            to="/forgot-password"
+                            style={{
+                              fontSize: "0.7rem",
+                              color: "#10b981",
+                              textDecoration: "none",
+                              fontWeight: "600",
+                              transition: "all 0.2s"
+                            }}
+                          >
+                            Forgot Password?
+                          </Link>
                         </div>
                       </div>
 
