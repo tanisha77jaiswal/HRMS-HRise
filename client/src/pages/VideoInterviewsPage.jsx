@@ -534,9 +534,35 @@ export default function VideoInterviewsPage() {
                               {(() => {
                                 const activeAns = selectedSession.answers.find((a) => a.questionId === activeQuestionId);
                                 const localBlob = window.__hrise_video_blobs?.[`${activeQuestionId}_candidate`];
-                                const hasRecordedVideo = !!(localBlob || activeAns?.videoUrl);
+                                const isBase64Video = activeAns?.videoUrl?.startsWith("data:video/");
                                 const isStaleBlob = !localBlob && activeAns?.videoUrl?.startsWith("blob:");
-                                const videoSrc = localBlob || (activeAns?.videoUrl && !isStaleBlob ? activeAns.videoUrl : getFallbackVideo(selectedSession.candidateName));
+                                const hasPlayableVideo = !!(localBlob || isBase64Video);
+                                const videoSrc = localBlob || (isBase64Video ? activeAns.videoUrl : null);
+
+                                // No playable video available — show a clean message instead of a random demo
+                                if (!videoSrc) {
+                                  return (
+                                    <div className="relative aspect-video bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl overflow-hidden shadow-lg border border-gray-700 flex flex-col items-center justify-center">
+                                      <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center mb-3">
+                                        <Video size={24} className="text-gray-400" />
+                                      </div>
+                                      <p className="text-sm font-bold text-gray-300">Recording Unavailable</p>
+                                      <p className="text-[11px] text-gray-500 mt-1 max-w-[200px] text-center leading-relaxed">
+                                        {isStaleBlob
+                                          ? "This video was recorded in a previous browser session and is no longer accessible."
+                                          : activeAns?.transcript
+                                            ? "No video was recorded for this answer, but a transcript is available."
+                                            : "The candidate did not record a response for this question."}
+                                      </p>
+                                      {/* Overlay tag */}
+                                      <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-xl text-[10px] font-bold text-white flex items-center gap-1.5 shadow-sm">
+                                        <span className="w-2 h-2 rounded-full bg-gray-500" />
+                                        NO VIDEO
+                                      </div>
+                                    </div>
+                                  );
+                                }
+
                                 return (
                                   <div className="relative aspect-video bg-black rounded-xl overflow-hidden shadow-lg border border-gray-800">
                                     <video
@@ -553,21 +579,15 @@ export default function VideoInterviewsPage() {
                                         }
                                       }}
                                       onError={(e) => {
-                                        if (e.target.dataset.fallbackTried === "true") {
-                                          console.error("Fallback video also failed to load. Stopping loop.");
-                                          e.target.src = "";
-                                          return;
-                                        }
-                                        console.warn("Recorded video failed to load or is cross-origin. Falling back to demo video.");
-                                        e.target.dataset.fallbackTried = "true";
-                                        e.target.src = getFallbackVideo(selectedSession.candidateName);
+                                        console.warn("Video playback failed.");
+                                        e.target.src = "";
                                       }}
                                     />
 
                                     {/* Overlay tag */}
                                     <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-xl text-[10px] font-bold text-white flex items-center gap-1.5 shadow-sm">
-                                      <span className={`w-2 h-2 rounded-full ${hasRecordedVideo ? "bg-emerald-500 animate-pulse" : "bg-amber-500"}`} />
-                                      {hasRecordedVideo ? (isStaleBlob ? "LIVE ATTEMPT (DEMO FALLBACK)" : "LIVE RECORDED ATTEMPT") : "DEMO VIDEO"}
+                                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                      LIVE RECORDED ATTEMPT
                                     </div>
                                   </div>
                                 );
