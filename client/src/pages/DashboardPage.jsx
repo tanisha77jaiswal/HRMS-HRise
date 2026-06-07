@@ -373,13 +373,6 @@ export default function DashboardPage() {
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/20 border border-white/20 rounded-full text-xs font-bold text-white/90">
                     <Sparkles size={11} className="text-yellow-300" /> HRise AI Platform
                   </div>
-                  {/* Live data badge */}
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/30 border border-emerald-400/40 rounded-full text-xs font-bold text-emerald-200">
-                    {loading
-                      ? <RefreshCw size={10} className="animate-spin" />
-                      : <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />}
-                    {loading ? "Fetching from MongoDB..." : "Live from MongoDB"}
-                  </div>
                   {/* Manual refresh button */}
                   <button
                     onClick={fetchAll}
