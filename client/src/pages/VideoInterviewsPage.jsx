@@ -546,41 +546,45 @@ export default function VideoInterviewsPage() {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* HTML5 Player */}
                             <div>
-                              <div className="relative aspect-video bg-black rounded-xl overflow-hidden shadow-lg border border-gray-800">
-                                <video
-                                  ref={videoPlayerRef}
-                                  src={
-                                    window.__hrise_video_blobs?.[
-                                      `${activeQuestionId}_candidate`
-                                    ] ||
-                                    selectedSession.answers.find(
-                                      (a) => a.questionId === activeQuestionId,
-                                    )?.videoUrl ||
-                                    getFallbackVideo(
-                                      selectedSession.candidateName,
-                                    )
-                                  }
-                                  controls
-                                  className="w-full h-full object-cover"
-                                  onTimeUpdate={() => {
-                                    if (videoPlayerRef.current) {
-                                      setCurrentTime(
-                                        videoPlayerRef.current.currentTime,
-                                      );
-                                    }
-                                  }}
-                                />
+                              {(() => {
+                                const activeAns = selectedSession.answers.find((a) => a.questionId === activeQuestionId);
+                                const hasRecordedVideo = !!(window.__hrise_video_blobs?.[`${activeQuestionId}_candidate`] || activeAns?.videoUrl);
+                                return (
+                                  <div className="relative aspect-video bg-black rounded-xl overflow-hidden shadow-lg border border-gray-800">
+                                    <video
+                                      ref={videoPlayerRef}
+                                      src={
+                                        window.__hrise_video_blobs?.[
+                                          `${activeQuestionId}_candidate`
+                                        ] ||
+                                        activeAns?.videoUrl ||
+                                        getFallbackVideo(
+                                          selectedSession.candidateName,
+                                        )
+                                      }
+                                      controls
+                                      className="w-full h-full object-cover"
+                                      onTimeUpdate={() => {
+                                        if (videoPlayerRef.current) {
+                                          setCurrentTime(
+                                            videoPlayerRef.current.currentTime,
+                                          );
+                                        }
+                                      }}
+                                      onError={(e) => {
+                                        console.warn("Recorded video failed to load or is cross-origin. Falling back to demo video.");
+                                        e.target.src = getFallbackVideo(selectedSession.candidateName);
+                                      }}
+                                    />
 
-                                {/* Overlay tag */}
-                                <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-[10px] font-bold text-white flex items-center gap-1">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                  {window.__hrise_video_blobs?.[
-                                    `${activeQuestionId}_candidate`
-                                  ]
-                                    ? "LIVE RECORDED ATTEMPT"
-                                    : "DEMO VIDEO"}
-                                </div>
-                              </div>
+                                    {/* Overlay tag */}
+                                    <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-[10px] font-bold text-white flex items-center gap-1">
+                                      <span className={`w-1.5 h-1.5 rounded-full ${hasRecordedVideo ? "bg-emerald-500 animate-pulse" : "bg-amber-500"}`} />
+                                      {hasRecordedVideo ? "LIVE RECORDED ATTEMPT" : "DEMO VIDEO"}
+                                    </div>
+                                  </div>
+                                );
+                              })()}
                               <div className="mt-3 flex items-center gap-2 text-[11px] text-gray-500">
                                 <Clock size={12} className="text-gray-400" />
                                 <span>

@@ -1,5 +1,38 @@
 import { InterviewSession } from "../models/interviewModel.js";
 import { Job } from "../models/jobModel.js";
+import { Candidate } from "../models/candidateModel.js";
+
+const syncCandidateStatus = async (session) => {
+  if (!session || (session.status !== "completed" && session.status !== "analyzed")) return;
+  try {
+    const candidate = await Candidate.findOne({
+      $or: [
+        { id: session.candidateId },
+        { email: session.candidateEmail },
+        { name: session.candidateName }
+      ]
+    });
+    if (candidate) {
+      candidate.status = "interviewed";
+      candidate.interviewCompleted = true;
+      if (session.answers && session.answers.length > 0) {
+        // filter out answers with 0 rating
+        const ratedAnswers = session.answers.filter(a => a.analysis && a.analysis.overallRating > 0);
+        if (ratedAnswers.length > 0) {
+          const totalRating = ratedAnswers.reduce((acc, a) => acc + (a.analysis.overallRating || 0), 0);
+          candidate.interviewScore = Math.round(totalRating / ratedAnswers.length);
+        } else {
+          const totalRating = session.answers.reduce((acc, a) => acc + (a.analysis?.overallRating || 0), 0);
+          candidate.interviewScore = Math.round(totalRating / session.answers.length);
+        }
+      }
+      await candidate.save();
+      console.log(`[Sync] Auto-updated candidate ${candidate.name} (${candidate.id}) status to interviewed.`);
+    }
+  } catch (err) {
+    console.error("[Sync Error] Failed to update candidate status for completed interview:", err.message);
+  }
+};
 
 export const getAllInterviews = async (req, res) => {
   try {
@@ -15,6 +48,10 @@ export const createInterview = async (req, res) => {
     const { id } = req.body;
     const isNew = !await InterviewSession.exists({ id });
     const fresh = await InterviewSession.findOneAndUpdate({ id }, req.body, { new: true, upsert: true });
+
+    if (fresh) {
+      await syncCandidateStatus(fresh);
+    }
 
     if (fresh && isNew && fresh.status === "scheduled") {
       const { createNotification } = await import("../services/notificationService.js");
@@ -43,6 +80,10 @@ export const updateInterview = async (req, res) => {
   try {
     const original = await InterviewSession.findOne({ id: req.params.id });
     const updated = await InterviewSession.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
+
+    if (updated) {
+      await syncCandidateStatus(updated);
+    }
 
     if (updated && req.body.status && req.body.status !== original?.status) {
       if (req.body.status === "completed" || req.body.status === "analyzed") {
