@@ -172,10 +172,9 @@ export default function ResumeScreeningPage() {
   };
 
   const bulkAction = (status) => {
+    // Optimistic UI update — change local state immediately
     setCandidates((prev) => {
       const updated = prev.map((c) => (selectedCandidates.has(c.id) ? { ...c, status } : c));
-      
-      // Onboarding cleanup for deselected candidates is handled by the backend onboarding API
 
       selectedCandidates.forEach((id) => {
         const c = prev.find((x) => x.id === id);
@@ -198,13 +197,25 @@ export default function ResumeScreeningPage() {
       });
       return updated;
     });
+
+    // Persist each status change to the backend
+    const idsToUpdate = [...selectedCandidates];
+    import("../utils/api").then(({ api }) => {
+      idsToUpdate.forEach((id) => {
+        api.candidates.update(id, { status }).catch((e) =>
+          console.error(`Failed to persist bulk status update for ${id}:`, e)
+        );
+      });
+    });
+
     setSelectedCandidates(new Set());
   };
 
   const updateCandidateStatus = (id, status) => {
+    // Optimistic UI update — update local state immediately so UI feels instant
     setCandidates((prev) => {
       const updated = prev.map((c) => (c.id === id ? { ...c, status } : c));
-      
+
       const candidateObj = prev.find(c => c.id === id);
       if (candidateObj) {
         let notifType = "info";
@@ -216,7 +227,6 @@ export default function ResumeScreeningPage() {
           selected: `${candidateObj.name} has been selected! An onboarding checklist has been generated.`,
           reviewed: `${candidateObj.name}'s profile has been reviewed by the hiring team.`,
         };
-        // Notify HR
         addHriseNotification(
           status === "selected" ? "Candidate Hired 🎉" : `Application ${status.charAt(0).toUpperCase() + status.slice(1)}`,
           statusMessages[status] || `${candidateObj.name}'s application status has been updated to ${status}.`,
@@ -224,7 +234,6 @@ export default function ResumeScreeningPage() {
           "recruiter"
         );
 
-        // Also notify the Candidate!
         const candidateMsgMap = {
           shortlisted: `Great news! Your application has been shortlisted. Next step: prepare for your video interview.`,
           rejected: `Thank you for your interest. We have reviewed your application and decided not to proceed at this time.`,
@@ -239,14 +248,14 @@ export default function ResumeScreeningPage() {
           );
         }
       }
-      
+
       // Create onboarding record via backend API when candidate is selected
       if (status === "selected") {
         const candidateObj = prev.find(c => c.id === id);
         if (candidateObj) {
           const activeJob = jobs.find(j => j.id === candidateObj.jobId);
           const jobTitle = activeJob ? activeJob.title : "Software Engineer";
-          
+
           const newOnboarding = {
             id: `onb-${Date.now()}`,
             candidateId: id,
@@ -268,14 +277,22 @@ export default function ResumeScreeningPage() {
               { id: "t-join", title: "Joining Date Assigned", description: "Confirm date and onboarding schedule details.", type: "meeting", completed: false, dueDate: "2026-06-15" }
             ]
           };
-          // Fire-and-forget: create onboarding record via backend API
           import("../utils/api").then(({ api }) => {
             api.onboarding.create(newOnboarding).catch(e => console.error("Failed to create onboarding:", e));
           });
         }
       }
-      // Onboarding cleanup for deselected candidates is handled by the backend
+
       return updated;
+    });
+
+    // ── Persist status change to MongoDB so it survives page refresh ──────────
+    // This is the critical fix: without this call, loadData() re-fetch from the
+    // backend would overwrite the local state change with the stale DB value.
+    import("../utils/api").then(({ api }) => {
+      api.candidates.update(id, { status }).catch((e) =>
+        console.error(`Failed to persist status update for candidate ${id}:`, e)
+      );
     });
   };
 
