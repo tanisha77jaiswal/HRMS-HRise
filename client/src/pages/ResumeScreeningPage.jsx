@@ -293,12 +293,14 @@ export default function ResumeScreeningPage() {
     .sort((a, b) => {
       if (sortBy === "score") return b.aiScore - a.aiScore;
       if (sortBy === "date") {
-        // createdAt is set by Mongoose timestamps (most precise) → appliedDate fallback → _id tiebreaker
-        const aTime = new Date(a.createdAt || a.appliedDate || 0).getTime();
-        const bTime = new Date(b.createdAt || b.appliedDate || 0).getTime();
-        if (bTime !== aTime) return bTime - aTime;
-        // MongoDB ObjectId encodes insertion millisecond — lexicographic comparison works correctly
-        return (b._id || "") > (a._id || "") ? -1 : 1;
+        // MongoDB ObjectId first 8 hex chars = Unix timestamp (seconds).
+        // Lexicographic _id comparison is always correct for insertion order
+        // on ALL documents — old seeded ones and newly uploaded ones alike.
+        const aId = a._id || "";
+        const bId = b._id || "";
+        if (bId > aId) return 1;
+        if (bId < aId) return -1;
+        return 0;
       }
       return b.matchPercentage - a.matchPercentage;
     });

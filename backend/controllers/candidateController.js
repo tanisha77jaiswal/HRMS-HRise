@@ -5,7 +5,9 @@ import { screenResume } from "../services/geminiService.js";
 
 export const getAllCandidates = async (req, res) => {
   try {
-    const list = await Candidate.find({});
+    // Sort by _id descending: MongoDB ObjectId encodes insertion timestamp in first 4 bytes,
+    // so _id: -1 always returns newest candidates first regardless of appliedDate format.
+    const list = await Candidate.find({}).sort({ _id: -1 });
     res.json(list);
   } catch (e) {
     res.status(500).json({ error: e.message });
