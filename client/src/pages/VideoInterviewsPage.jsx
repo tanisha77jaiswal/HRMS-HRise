@@ -471,7 +471,13 @@ export default function VideoInterviewsPage() {
                               setRescheduleDays(3);
                               setRescheduleReason("");
                             }}
-                            className="flex-1 flex items-center justify-center gap-1.5 text-[11px] font-semibold text-indigo-600 hover:text-white hover:bg-indigo-600 border border-indigo-200 hover:border-indigo-600 rounded-lg px-3 py-1.5 transition-all"
+                            disabled={!!session.rescheduledAt}
+                            className={`flex-1 flex items-center justify-center gap-1.5 text-[11px] font-semibold rounded-lg px-3 py-1.5 transition-all border ${
+                              session.rescheduledAt
+                                ? "opacity-40 cursor-not-allowed text-gray-400 border-gray-250 bg-gray-50"
+                                : "text-indigo-600 hover:text-white hover:bg-indigo-600 border-indigo-200 hover:border-indigo-600"
+                            }`}
+                            title={session.rescheduledAt ? "Already Rescheduled" : "Reschedule Interview"}
                           >
                             <CalendarClock size={13} />
                             Reschedule

@@ -243,7 +243,6 @@ export default function CandidateInterviewPage() {
     // Filter sessions for this candidate
     const mySessions = allSessions.filter(
       (s) =>
-        s.candidateName?.toLowerCase() === user.name?.toLowerCase() ||
         s.candidateEmail?.toLowerCase() === user.email?.toLowerCase()
     );
 
@@ -594,7 +593,6 @@ export default function CandidateInterviewPage() {
           const candidatesList = JSON.parse(candidatesSaved);
           const candIdx = candidatesList.findIndex(
             (c) =>
-              c.name?.toLowerCase() === user?.name?.toLowerCase() ||
               c.email?.toLowerCase() === user?.email?.toLowerCase()
           );
           if (candIdx !== -1) {

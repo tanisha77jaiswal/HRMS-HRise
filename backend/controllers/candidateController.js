@@ -8,10 +8,7 @@ export const getAllCandidates = async (req, res) => {
     let query = {};
     if (req.user && req.user.role !== "management_admin" && req.user.role !== "recruiter") {
       query = {
-        $or: [
-          { email: req.user.email.toLowerCase() },
-          { name: { $regex: new RegExp(`^${req.user.name}$`, "i") } }
-        ]
+        email: { $regex: new RegExp(`^${req.user.email}$`, "i") }
       };
     }
     // Sort by _id descending: MongoDB ObjectId encodes insertion timestamp in first 4 bytes,

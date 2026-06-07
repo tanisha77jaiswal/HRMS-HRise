@@ -84,8 +84,7 @@ export default function CandidateApplicationsPage() {
         const myApps = allFromBackend
           .filter(
             (c) =>
-              c.email?.toLowerCase() === user?.email?.toLowerCase() ||
-              c.name?.toLowerCase() === user?.name?.toLowerCase()
+              c.email?.toLowerCase() === user?.email?.toLowerCase()
           )
           .map((c) => ({ ...c, matchExplanation: sanitizeFeedback(c.matchExplanation) }));
         setMyApplications(myApps);

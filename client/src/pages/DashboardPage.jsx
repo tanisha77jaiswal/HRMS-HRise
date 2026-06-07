@@ -148,23 +148,20 @@ function CandidateDashboard({ user }) {
       if (candidatesRes.status === "fulfilled") {
         const all  = Array.isArray(candidatesRes.value) ? candidatesRes.value : [];
         const mine = all.filter(c =>
-          c.email?.toLowerCase() === user?.email?.toLowerCase() ||
-          c.name?.toLowerCase()  === user?.name?.toLowerCase()
+          c.email?.toLowerCase() === user?.email?.toLowerCase()
         );
         setMyApps(mine);
         localStorage.setItem("hrise_candidates", JSON.stringify(all));
       } else {
         const saved = JSON.parse(localStorage.getItem("hrise_candidates") || "[]");
         setMyApps(saved.filter(c =>
-          c.email?.toLowerCase() === user?.email?.toLowerCase() ||
-          c.name?.toLowerCase()  === user?.name?.toLowerCase()
+          c.email?.toLowerCase() === user?.email?.toLowerCase()
         ));
       }
 
       if (sessionsRes.status === "fulfilled") {
         const all  = Array.isArray(sessionsRes.value) ? sessionsRes.value : [];
         const mine = all.filter(s =>
-          s.candidateName?.toLowerCase()  === user?.name?.toLowerCase()  ||
           s.candidateEmail?.toLowerCase() === user?.email?.toLowerCase()
         );
         setMySessions(mine);
@@ -173,7 +170,6 @@ function CandidateDashboard({ user }) {
       if (onboardingRes.status === "fulfilled") {
         const all  = Array.isArray(onboardingRes.value) ? onboardingRes.value : [];
         const mine = all.find(r =>
-          r.candidateName?.toLowerCase()  === user?.name?.toLowerCase()  ||
           r.candidateEmail?.toLowerCase() === user?.email?.toLowerCase()
         ) || null;
         setOnboarding(mine);
