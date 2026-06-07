@@ -22,6 +22,7 @@ const CandidateSchema = new mongoose.Schema({
   interviewScheduled: { type: Boolean, default: false },
   interviewCompleted: { type: Boolean, default: false },
   screenedByHR: { type: Boolean, default: false },
+  interviewScore: { type: Number },
 }, { timestamps: true });
 
 const CandidateProfileSchema = new mongoose.Schema({
