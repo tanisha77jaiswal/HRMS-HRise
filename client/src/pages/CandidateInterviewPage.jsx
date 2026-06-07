@@ -217,6 +217,7 @@ export default function CandidateInterviewPage() {
   const streamRef = useRef(null);
   const timerRef = useRef(null);
   const recognitionRef = useRef(null);
+  const isPendingSubmitRef = useRef(false);
 
   // ── Load sessions from localStorage ──────────────────────────────────────
   const loadSessions = useCallback(() => {
@@ -362,6 +363,8 @@ export default function CandidateInterviewPage() {
     setRecordingTime(0);
     setActiveSpeechText("");
 
+    const targetQuestionId = currentQ.id;
+
     const chunks = [];
     const recorder = new MediaRecorder(streamRef.current);
     mediaRecorderRef.current = recorder;
@@ -390,7 +393,7 @@ export default function CandidateInterviewPage() {
           const current = final || interim;
           localSpeechText = current;
           setActiveSpeechText(current);
-          setAnswersText((prev) => ({ ...prev, [currentQ.id]: current }));
+          setAnswersText((prev) => ({ ...prev, [targetQuestionId]: current }));
         };
 
         recognition.onerror = (e) => console.error("Speech Recognition error:", e);
@@ -411,7 +414,7 @@ export default function CandidateInterviewPage() {
       }
       const blob = new Blob(chunks, { type: "video/webm" });
       const videoUrl = URL.createObjectURL(blob);
-      const cacheKey = `${currentQ.id}_candidate`;
+      const cacheKey = `${targetQuestionId}_candidate`;
       if (!window.__hrise_video_blobs) window.__hrise_video_blobs = {};
       window.__hrise_video_blobs[cacheKey] = videoUrl;
 
@@ -419,14 +422,29 @@ export default function CandidateInterviewPage() {
       const finalSpeechText = localSpeechText.trim();
 
       setRecordings((prev) => {
-        const filtered = prev.filter((r) => r.questionId !== currentQ.id);
+        const filtered = prev.filter((r) => r.questionId !== targetQuestionId);
         return [
           ...filtered,
-          { questionId: currentQ.id, duration: `${localRecordingTime}s`, videoUrl, transcript: finalSpeechText },
+          { questionId: targetQuestionId, duration: `${localRecordingTime}s`, videoUrl, transcript: finalSpeechText },
         ];
       });
-      setAnswersText((prev) => ({ ...prev, [currentQ.id]: finalSpeechText }));
-      setIsReviewMode(true);
+
+      setAnswersText((prev) => {
+        const updated = { ...prev, [targetQuestionId]: finalSpeechText };
+        if (isPendingSubmitRef.current) {
+          isPendingSubmitRef.current = false;
+          handleSubmit(updated);
+        }
+        return updated;
+      });
+
+      // Only set review mode if we are still on the same question
+      setCurrentQIndex((currentIdx) => {
+        if (questions[currentIdx]?.id === targetQuestionId) {
+          setIsReviewMode(true);
+        }
+        return currentIdx;
+      });
     };
 
     recorder.start();
@@ -448,6 +466,14 @@ export default function CandidateInterviewPage() {
   };
 
   const handleNext = () => {
+    if (isRecording) {
+      stopRecording();
+      if (currentQIndex === questions.length - 1) {
+        isPendingSubmitRef.current = true;
+        return;
+      }
+    }
+
     if (currentQIndex < questions.length - 1) {
       setCurrentQIndex((prev) => prev + 1);
       setRecordingTime(0);
@@ -457,11 +483,11 @@ export default function CandidateInterviewPage() {
   };
 
   // ── Submit interview ───────────────────────────────────────────────────────
-  const handleSubmit = () => {
+  const handleSubmit = (finalAnswersText = answersText) => {
     setView("analyzing");
 
     const candidateAnswers = questions.map((q) => {
-      const actualSpeech = (answersText[q.id] || "").trim();
+      const actualSpeech = (finalAnswersText[q.id] || "").trim();
       const wordCount = actualSpeech ? actualSpeech.split(/\s+/).length : 0;
       const hasAnswer = wordCount > 0;
 
@@ -732,6 +758,7 @@ export default function CandidateInterviewPage() {
             <div className="max-w-4xl mx-auto mb-5">
               <button
                 onClick={() => {
+                  if (isRecording) stopRecording();
                   if (streamRef.current) streamRef.current.getTracks().forEach((t) => t.stop());
                   exitFullscreen();
                   setView("dashboard");
@@ -967,7 +994,10 @@ export default function CandidateInterviewPage() {
                   <div className="flex justify-between">
                     <Button
                       variant="ghost"
-                      onClick={() => { if (currentQIndex > 0) setCurrentQIndex((prev) => prev - 1); }}
+                      onClick={() => {
+                        if (isRecording) stopRecording();
+                        if (currentQIndex > 0) setCurrentQIndex((prev) => prev - 1);
+                      }}
                       disabled={currentQIndex === 0}
                     >
                       <ArrowLeft size={16} /> Previous

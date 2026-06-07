@@ -268,6 +268,7 @@ export default function VideoInterviewsPage() {
       id: `i-${Date.now()}`,
       candidateId: selectedCandidateId || "manual",
       candidateName: candName,
+      candidateEmail: selectedCandidate ? selectedCandidate.email : "",
       jobId: jobId || "custom",
       jobTitle: jobTitle,
       questions: generatedQuestions,
