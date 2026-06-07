@@ -58,6 +58,10 @@ def load_model():
         fallback_mode = True
         return True
 
+# Call load_model() at module import level so it runs under WSGI servers (e.g. gunicorn)
+load_model()
+
+
 
 # ─── Validation Constants ──────────────────────────────────────────────────────
 VALID_EDUCATION_LEVELS = ["High School", "Associate", "Bachelor", "Master", "PhD"]
