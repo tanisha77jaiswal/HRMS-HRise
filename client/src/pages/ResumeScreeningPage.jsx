@@ -768,7 +768,7 @@ export default function ResumeScreeningPage() {
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-2">
-                              {/* 1. Evaluate Candidate — always visible so recruiter can see resume analysis + interview status */}
+                              {/* 1. Evaluate Candidate — always clickable */}
                               <Link
                                 to={`/evaluation/${c.id}`}
                                 className={`p-1.5 rounded-xl transition-all font-bold text-xs flex items-center gap-1 shadow-sm ${
@@ -780,20 +780,30 @@ export default function ResumeScreeningPage() {
                               >
                                 <Brain size={14} /> {c.status === "interviewed" ? "Evaluate" : "Profile"}
                               </Link>
-                              {/* 2. Shortlist / Reject — hide if already in a terminal state */}
+                              {/* 2. Shortlist / Reject — disabled once status has been acted upon */}
                               {c.status !== "selected" && c.status !== "rejected" && (
                                 <>
                                   <button
                                     onClick={() => updateCandidateStatus(c.id, "shortlisted")}
-                                    className="p-1.5 rounded-lg hover:bg-emerald-50 text-emerald-600 transition-colors border border-gray-200"
-                                    title="Shortlist Candidate"
+                                    disabled={c.status === "shortlisted" || c.status === "interviewed"}
+                                    className={`p-1.5 rounded-lg transition-colors border border-gray-200 ${
+                                      c.status === "shortlisted" || c.status === "interviewed"
+                                        ? "opacity-40 cursor-not-allowed text-gray-400"
+                                        : "hover:bg-emerald-50 text-emerald-600"
+                                    }`}
+                                    title={c.status === "shortlisted" || c.status === "interviewed" ? "Already actioned" : "Shortlist Candidate"}
                                   >
                                     <Check size={15} />
                                   </button>
                                   <button
                                     onClick={() => updateCandidateStatus(c.id, "rejected")}
-                                    className="p-1.5 rounded-lg hover:bg-red-50 text-red-600 transition-colors border border-gray-200"
-                                    title="Reject Candidate"
+                                    disabled={c.status === "shortlisted" || c.status === "interviewed"}
+                                    className={`p-1.5 rounded-lg transition-colors border border-gray-200 ${
+                                      c.status === "shortlisted" || c.status === "interviewed"
+                                        ? "opacity-40 cursor-not-allowed text-gray-400"
+                                        : "hover:bg-red-50 text-red-600"
+                                    }`}
+                                    title={c.status === "shortlisted" || c.status === "interviewed" ? "Already actioned" : "Reject Candidate"}
                                   >
                                     <X size={15} />
                                   </button>
@@ -805,20 +815,21 @@ export default function ResumeScreeningPage() {
                                 </span>
                               )}
                               {c.status === "rejected" && (
-                                <button
-                                  onClick={() => updateCandidateStatus(c.id, "shortlisted")}
-                                  className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors border border-gray-200"
-                                  title="Move back to Shortlisted"
-                                >
-                                  <Check size={15} />
-                                </button>
+                                <span className="px-2 py-1 rounded-lg bg-red-100 text-red-600 text-xs font-bold flex items-center gap-1">
+                                  <X size={12} /> Rejected
+                                </span>
                               )}
-                              {/* 3. Move to Interview — only for active candidates not yet interviewed */}
+                              {/* 3. Move to Interview — disabled once already shortlisted or interviewed */}
                               {c.status !== "selected" && c.status !== "rejected" && c.status !== "interviewed" && (
                                 <button
                                   onClick={() => handleMoveToInterview(c)}
-                                  className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors border border-gray-200 flex items-center justify-center"
-                                  title="Schedule Interview"
+                                  disabled={c.status === "shortlisted"}
+                                  className={`p-1.5 rounded-lg transition-colors border border-gray-200 flex items-center justify-center ${
+                                    c.status === "shortlisted"
+                                      ? "opacity-40 cursor-not-allowed text-gray-400"
+                                      : "hover:bg-blue-50 text-blue-600"
+                                  }`}
+                                  title={c.status === "shortlisted" ? "Already actioned" : "Schedule Interview"}
                                 >
                                   <Video size={15} />
                                 </button>
