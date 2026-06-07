@@ -5,13 +5,17 @@ import { Candidate } from "../models/candidateModel.js";
 const syncCandidateStatus = async (session) => {
   if (!session || (session.status !== "completed" && session.status !== "analyzed")) return;
   try {
-    const candidate = await Candidate.findOne({
-      $or: [
-        { id: session.candidateId },
-        { email: session.candidateEmail },
-        { name: session.candidateName }
-      ]
-    });
+    let candidate = null;
+    if (session.candidateId) {
+      candidate = await Candidate.findOne({ id: session.candidateId });
+    }
+    if (!candidate && session.candidateEmail) {
+      candidate = await Candidate.findOne({ email: session.candidateEmail.toLowerCase() });
+    }
+    if (!candidate && session.candidateName) {
+      candidate = await Candidate.findOne({ name: { $regex: new RegExp(`^${session.candidateName}$`, "i") } });
+    }
+
     if (candidate) {
       candidate.status = "interviewed";
       candidate.interviewCompleted = true;
