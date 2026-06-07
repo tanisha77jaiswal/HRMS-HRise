@@ -19,25 +19,10 @@ import { addHriseNotification } from "../utils/notifications";
 import { getTailoredQuestions } from "../utils/questions";
 import { syncPush } from "../utils/sync";
 import { api } from "../utils/api";
-
-const femaleSpeakerVideo =
-  "https://assets.mixkit.co/videos/preview/mixkit-woman-talking-on-a-video-call-with-laptop-42171-large.mp4";
-const maleSpeakerVideo =
-  "https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-on-laptop-42173-large.mp4";
+import { fallbackVideoBase64 } from "../assets/video_base64";
 
 const getFallbackVideo = (candidateName) => {
-  const lowercaseName = candidateName.toLowerCase();
-  if (
-    lowercaseName.includes("james") ||
-    lowercaseName.includes("marcus") ||
-    lowercaseName.includes("david") ||
-    lowercaseName.includes("thomas") ||
-    lowercaseName.includes("wright") ||
-    lowercaseName.includes("chen")
-  ) {
-    return maleSpeakerVideo;
-  }
-  return femaleSpeakerVideo;
+  return fallbackVideoBase64;
 };
 
 // Estimates time stamps for transcripts to enable clickable seek navigation
@@ -555,6 +540,7 @@ export default function VideoInterviewsPage() {
                                 return (
                                   <div className="relative aspect-video bg-black rounded-xl overflow-hidden shadow-lg border border-gray-800">
                                     <video
+                                      key={activeQuestionId}
                                       ref={videoPlayerRef}
                                       src={videoSrc}
                                       controls
@@ -567,7 +553,13 @@ export default function VideoInterviewsPage() {
                                         }
                                       }}
                                       onError={(e) => {
+                                        if (e.target.dataset.fallbackTried === "true") {
+                                          console.error("Fallback video also failed to load. Stopping loop.");
+                                          e.target.src = "";
+                                          return;
+                                        }
                                         console.warn("Recorded video failed to load or is cross-origin. Falling back to demo video.");
+                                        e.target.dataset.fallbackTried = "true";
                                         e.target.src = getFallbackVideo(selectedSession.candidateName);
                                       }}
                                     />
