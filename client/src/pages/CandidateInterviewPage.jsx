@@ -25,6 +25,7 @@ import { Card, Button, Badge } from "../components/ui";
 import { addHriseNotification } from "../utils/notifications";
 import { syncPush } from "../utils/sync";
 import { getTailoredQuestions } from "../utils/questions";
+import { api } from "../utils/api";
 
 // ─── Helper ─────────────────────────────────────────────────────────────────
 function formatScheduledDate(dateStr) {
@@ -228,26 +229,32 @@ export default function CandidateInterviewPage() {
   const recognitionRef = useRef(null);
   const isPendingSubmitRef = useRef(false);
 
-  // ── Load sessions from localStorage ──────────────────────────────────────
-  const loadSessions = useCallback(() => {
+  // ── Load sessions from backend ───────────────────────────────────────────
+  const loadSessions = useCallback(async () => {
     if (!user) return;
-
-    const savedSessions = localStorage.getItem("hrise_interview_sessions");
-    let allSessions = [];
-    if (savedSessions) {
-      try {
-        allSessions = JSON.parse(savedSessions);
-      } catch (e) {}
+    try {
+      const allSessions = await api.interviews.getAll();
+      if (Array.isArray(allSessions)) {
+        const mySessions = allSessions.filter(
+          (s) => s.candidateEmail?.toLowerCase() === user.email?.toLowerCase()
+        );
+        setSessions(mySessions);
+        localStorage.setItem("hrise_interview_sessions", JSON.stringify(allSessions));
+      }
+    } catch (err) {
+      console.warn("Failed to fetch sessions from backend, loading from localStorage:", err);
+      const savedSessions = localStorage.getItem("hrise_interview_sessions");
+      let allSessions = [];
+      if (savedSessions) {
+        try {
+          allSessions = JSON.parse(savedSessions);
+        } catch (e) {}
+      }
+      const mySessions = allSessions.filter(
+        (s) => s.candidateEmail?.toLowerCase() === user.email?.toLowerCase()
+      );
+      setSessions(mySessions);
     }
-
-    // Filter sessions for this candidate
-    const mySessions = allSessions.filter(
-      (s) =>
-        s.candidateEmail?.toLowerCase() === user.email?.toLowerCase()
-    );
-
-    // If no sessions found for this user, show empty state
-    setSessions(mySessions);
   }, [user]);
 
   useEffect(() => {

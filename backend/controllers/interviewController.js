@@ -151,6 +151,22 @@ export const rescheduleInterview = async (req, res) => {
     );
     if (!updated) return res.status(404).json({ error: "Interview session not found." });
 
+    // Reset Candidate status to shortlisted so they can take the interview again
+    let candidate = null;
+    if (updated.candidateId) {
+      candidate = await Candidate.findOne({ id: updated.candidateId });
+    }
+    if (!candidate && updated.candidateEmail) {
+      candidate = await Candidate.findOne({ email: updated.candidateEmail.toLowerCase() });
+    }
+    if (candidate) {
+      candidate.status = "shortlisted";
+      candidate.interviewCompleted = false;
+      candidate.interviewScore = undefined;
+      await candidate.save();
+      console.log(`[Reschedule] Reset candidate ${candidate.name} (${candidate.id}) status to shortlisted.`);
+    }
+
     const { createNotification } = await import("../services/notificationService.js");
     await createNotification({
       title: "Interview Scheduled",
