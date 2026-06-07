@@ -154,7 +154,7 @@ export const applyForJob = async (req, res) => {
     );
 
     // 2. Build & save Candidate document
-    const appliedDate = new Date().toISOString().slice(0, 10);
+    const appliedDate = new Date(); // full timestamp so sort-by-date works correctly
     const newCandidate = new Candidate({
       id: `c-self-${Date.now()}`,
       name: candidateName,
@@ -217,11 +217,9 @@ export const screenBulkResumes = async (req, res) => {
 
     console.log(`[Bulk Screen] HR screening ${files.length} resume(s) for job: ${jobId}`);
 
-    const results    = [];
-    const appliedDate = new Date().toISOString().slice(0, 10);
+    const appliedDate = new Date(); // full timestamp so sort-by-date works correctly
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
+    const promises = files.map(async (file, i) => {
       try {
         console.log(`  [${i + 1}/${files.length}] Processing: ${file.originalname}`);
 
@@ -282,13 +280,13 @@ export const screenBulkResumes = async (req, res) => {
           recipientRole: "recruiter"
         });
 
-        results.push(doc);
         console.log(`  ✓ ${candidateName} — score: ${aiEvaluation.matchScore}/100`);
+        return doc;
 
       } catch (fileErr) {
         console.error(`  ✗ Failed: ${file.originalname} — ${fileErr.message}`);
-        // Push an error placeholder so the frontend still knows this file was attempted
-        results.push({
+        // Return an error placeholder so the frontend still knows this file was attempted
+        return {
           id: `c-err-${Date.now()}-${i}`,
           name: file.originalname.replace(/\.[^/.]+$/, ""),
           email: "",
@@ -303,9 +301,11 @@ export const screenBulkResumes = async (req, res) => {
           resumeFile: file.originalname,
           matchExplanation: `Resume parsing failed: ${fileErr.message}`,
           error: true,
-        });
+        };
       }
-    }
+    });
+
+    const results = await Promise.all(promises);
 
     console.log(`[Bulk Screen] Done. ${results.length} resume(s) processed.`);
     res.status(201).json({ candidates: results, total: results.length });

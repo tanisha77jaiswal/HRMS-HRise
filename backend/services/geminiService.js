@@ -133,55 +133,365 @@ Return ONLY a valid JSON object matching the schema. Do not wrap in markdown blo
   return evaluationResult;
 };
 
+// ─── Skill Synonym Map ────────────────────────────────────────────────────────
+// Maps canonical skill names to known aliases/abbreviations found in resumes
+const SKILL_SYNONYMS = {
+  "javascript": ["js", "javascript", "ecmascript", "es6", "es2015", "es2020", "node.js", "nodejs"],
+  "typescript": ["ts", "typescript"],
+  "python": ["python", "py", "python3"],
+  "react": ["react", "reactjs", "react.js"],
+  "angular": ["angular", "angularjs", "angular.js"],
+  "vue": ["vue", "vuejs", "vue.js"],
+  "node.js": ["node", "nodejs", "node.js"],
+  "express": ["express", "expressjs", "express.js"],
+  "mongodb": ["mongo", "mongodb"],
+  "postgresql": ["postgres", "postgresql", "psql"],
+  "mysql": ["mysql", "sql", "rdbms"],
+  "sql": ["sql", "mysql", "postgresql", "postgres", "mssql", "oracle", "sqlite"],
+  "machine learning": ["ml", "machine learning", "machinelearning"],
+  "deep learning": ["dl", "deep learning", "deeplearning", "neural network", "neural networks"],
+  "artificial intelligence": ["ai", "artificial intelligence"],
+  "natural language processing": ["nlp", "natural language processing", "text mining"],
+  "computer vision": ["cv", "computer vision", "image processing"],
+  "docker": ["docker", "containerization", "dockerfile"],
+  "kubernetes": ["k8s", "kubernetes"],
+  "aws": ["aws", "amazon web services", "ec2", "s3", "lambda"],
+  "gcp": ["gcp", "google cloud", "google cloud platform"],
+  "azure": ["azure", "microsoft azure"],
+  "git": ["git", "github", "gitlab", "bitbucket", "version control"],
+  "rest api": ["rest", "restful", "rest api", "api development"],
+  "graphql": ["graphql", "gql"],
+  "java": ["java", "java ee", "spring", "spring boot"],
+  "c++": ["c++", "cpp", "c plus plus"],
+  "c#": ["c#", "csharp", "dotnet", ".net"],
+  "go": ["golang", "go language"],
+  "rust": ["rust", "rust lang"],
+  "php": ["php", "laravel", "symfony"],
+  "swift": ["swift", "ios development", "swiftui"],
+  "kotlin": ["kotlin", "android development"],
+  "flutter": ["flutter", "dart"],
+  "react native": ["react native", "reactnative"],
+  "redux": ["redux", "zustand", "recoil"],
+  "tailwind": ["tailwind", "tailwindcss"],
+  "sass": ["sass", "scss", "less"],
+  "webpack": ["webpack", "vite", "rollup", "bundler"],
+  "jest": ["jest", "mocha", "chai", "vitest", "unit testing", "testing"],
+  "ci/cd": ["ci/cd", "jenkins", "github actions", "gitlab ci", "circle ci", "devops pipeline"],
+  "agile": ["agile", "scrum", "kanban", "sprint"],
+  "leadership": ["leadership", "team lead", "led team", "managing team", "team management"],
+  "communication": ["communication", "presentation", "stakeholder management"],
+  "data analysis": ["data analysis", "data analytics", "pandas", "numpy", "tableau", "power bi"],
+  "excel": ["excel", "microsoft excel", "spreadsheet"],
+  "project management": ["project management", "pmp", "jira", "asana", "trello"],
+  "salesforce": ["salesforce", "crm", "sfdc"],
+  "ui/ux": ["ui/ux", "ux design", "figma", "sketch", "adobe xd", "user experience", "user interface"],
+};
+
 /**
- * Generate mock evaluation as a fallback
+ * Check if a skill appears in the resume text, using synonym expansion.
+ * Returns a confidence score: 2 = strong match, 1 = synonym match, 0 = no match.
+ */
+function skillMatchScore(skill, resumeLower) {
+  const skillLower = skill.toLowerCase().trim();
+
+  // Exact whole-word match (highest confidence)
+  const exactRegex = new RegExp(`\\b${skillLower.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&")}\\b`, "i");
+  if (exactRegex.test(resumeLower)) return 2;
+
+  // Synonym match — look for any alias
+  for (const [canonical, aliases] of Object.entries(SKILL_SYNONYMS)) {
+    if (canonical === skillLower || aliases.includes(skillLower)) {
+      for (const alias of aliases) {
+        const aliasRegex = new RegExp(`\\b${alias.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&")}\\b`, "i");
+        if (aliasRegex.test(resumeLower)) return 1;
+      }
+    }
+  }
+
+  // Partial match — skill string is a substring (least confidence)
+  if (resumeLower.includes(skillLower)) return 1;
+
+  return 0;
+}
+
+/**
+ * Extract total years of professional experience from resume text.
+ * Parses patterns like "5 years", "3+ years", date ranges like "Jan 2019 – Mar 2023".
+ */
+function extractExperienceYears(resumeText) {
+  const text = resumeText;
+  let maxYears = 0;
+
+  // Pattern 1: explicit "X years of experience"
+  const explicitMatches = text.matchAll(/(\d+\.?\d*)\s*\+?\s*years?\s+(?:of\s+)?(?:professional\s+)?experience/gi);
+  for (const m of explicitMatches) {
+    const y = parseFloat(m[1]);
+    if (y > maxYears && y < 50) maxYears = y;
+  }
+
+  // Pattern 2: date ranges like "2018 – 2023", "Jan 2019 - Present", "Mar 2020 – Jun 2024"
+  const MONTHS = "jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|january|february|march|april|june|july|august|september|october|november|december";
+  const dateRangePattern = new RegExp(
+    `(?:(?:${MONTHS})\\.?\\s+)?(\\d{4})\\s*[-–—to]+\\s*(?:(?:${MONTHS})\\.?\\s+)?(\\d{4}|present|current|now)`,
+    "gi"
+  );
+  const currentYear = new Date().getFullYear();
+  let totalRangeYears = 0;
+  const seenRanges = new Set();
+
+  for (const m of text.matchAll(dateRangePattern)) {
+    const startY = parseInt(m[1]);
+    const endRaw = m[2].toLowerCase();
+    const endY = ["present", "current", "now"].includes(endRaw) ? currentYear : parseInt(m[2]);
+    const key = `${startY}-${endY}`;
+    if (!seenRanges.has(key) && endY >= startY && startY >= 1990 && endY <= currentYear + 1) {
+      seenRanges.add(key);
+      totalRangeYears += endY - startY;
+    }
+  }
+
+  if (totalRangeYears > 0 && totalRangeYears < 50) {
+    maxYears = Math.max(maxYears, totalRangeYears);
+  }
+
+  return Math.round(maxYears);
+}
+
+/**
+ * Detect education from resume text.
+ * Returns array of { degree, institution, year }
+ */
+function extractEducation(resumeText) {
+  const text = resumeText;
+  const education = [];
+
+  const degreePatterns = [
+    { pattern: /ph\.?d\.?|doctor(?:ate)?(?:\s+of\s+\w+)?/i, label: "PhD" },
+    { pattern: /m\.?tech\.?|master(?:\s+of\s+\w+)?|m\.?s\.?|m\.?b\.?a\.?|m\.?e\.?|m\.?sc\.?/i, label: "Master's" },
+    { pattern: /b\.?tech\.?|b\.?e\.?|bachelor(?:\s+of\s+\w+)?|b\.?s\.?c?\.?|b\.?a\.?|under\s*grad/i, label: "Bachelor's" },
+    { pattern: /diploma|associate(?:\s+degree)?/i, label: "Diploma/Associate" },
+    { pattern: /high\s*school|secondary|12th|hsc|10\+2/i, label: "High School" },
+  ];
+
+  for (const { pattern, label } of degreePatterns) {
+    if (pattern.test(text)) {
+      // Try to extract institution name (next word group after degree)
+      const institutionMatch = text.match(
+        new RegExp(`${pattern.source}[^\\n]{0,80}?((?:[A-Z][a-z]+\\s*){1,5}(?:University|College|Institute|School|Academy|IIT|NIT|MIT|UCLA|Stanford|Harvard)[^\\n]{0,40})`, "i")
+      );
+      const institution = institutionMatch ? institutionMatch[1].trim() : "University";
+
+      // Try to extract graduation year
+      const yearMatch = text.match(/\b(19[89]\d|20[0-2]\d)\b/);
+      const year = yearMatch ? parseInt(yearMatch[1]) : null;
+
+      education.push({ degree: label, institution, year });
+      break; // Take highest degree found
+    }
+  }
+
+  if (education.length === 0) {
+    education.push({ degree: "Bachelor's", institution: "University", year: null });
+  }
+
+  return education;
+}
+
+/**
+ * Score education level against job requirements.
+ */
+function scoreEducation(education, jobTitle) {
+  const degree = (education[0]?.degree || "").toLowerCase();
+  const title = jobTitle.toLowerCase();
+
+  // PhD/Research roles
+  if (title.includes("research") || title.includes("scientist") || title.includes("phd")) {
+    if (degree.includes("phd")) return 100;
+    if (degree.includes("master")) return 70;
+    return 45;
+  }
+  // Senior/Lead/Manager roles
+  if (title.includes("senior") || title.includes("lead") || title.includes("manager") || title.includes("architect")) {
+    if (degree.includes("master") || degree.includes("phd")) return 100;
+    if (degree.includes("bachelor")) return 85;
+    return 65;
+  }
+  // Standard roles
+  if (degree.includes("phd") || degree.includes("master")) return 100;
+  if (degree.includes("bachelor")) return 90;
+  if (degree.includes("diploma") || degree.includes("associate")) return 70;
+  return 55;
+}
+
+/**
+ * Score seniority alignment between resume and job title.
+ */
+function scoreSeniority(resumeText, jobTitle) {
+  const text = resumeText.toLowerCase();
+  const title = jobTitle.toLowerCase();
+
+  const seniorSignals = ["senior", "lead", "principal", "staff", "architect", "manager", "director", "vp", "head of", "team lead"];
+  const juniorSignals = ["junior", "associate", "entry", "intern", "graduate", "fresher", "trainee"];
+
+  const isSeniorJob = seniorSignals.some(s => title.includes(s));
+  const isJuniorJob = juniorSignals.some(s => title.includes(s));
+
+  const resumeHasSenior = seniorSignals.some(s => text.includes(s));
+  const resumeHasJunior = juniorSignals.some(s => text.includes(s));
+
+  if (isSeniorJob && resumeHasSenior) return 100;
+  if (isSeniorJob && !resumeHasSenior && !resumeHasJunior) return 70;
+  if (isSeniorJob && resumeHasJunior) return 40;
+  if (isJuniorJob && resumeHasJunior) return 100;
+  if (isJuniorJob && !resumeHasSenior) return 85;
+  if (isJuniorJob && resumeHasSenior) return 75; // overqualified
+  return 80; // neutral
+}
+
+/**
+ * Score domain/industry keyword presence in resume.
+ */
+function scoreDomainKeywords(resumeText, job) {
+  const text = resumeText.toLowerCase();
+  const titleWords = (job.title || "").toLowerCase().split(/\s+/).filter(w => w.length > 3);
+  const descWords = (job.description || "")
+    .toLowerCase()
+    .split(/\W+/)
+    .filter(w => w.length > 4)
+    .slice(0, 80); // top 80 words from JD
+
+  const allDomainWords = [...new Set([...titleWords, ...descWords])];
+  const matched = allDomainWords.filter(w => text.includes(w));
+  if (allDomainWords.length === 0) return 70;
+  return Math.min(100, Math.round((matched.length / allDomainWords.length) * 100));
+}
+
+/**
+ * Extract candidate name from resume text (first non-empty lines heuristic).
+ */
+function extractCandidateName(resumeText, candidateEmail) {
+  const lines = resumeText.split(/\n/).map(l => l.trim()).filter(l => l.length > 0);
+
+  // Check first 5 lines for a proper name (2-4 capitalized words, no digits or special chars)
+  for (const line of lines.slice(0, 5)) {
+    if (/^[A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3}$/.test(line) && line.split(" ").length <= 4) {
+      return line;
+    }
+  }
+
+  // Fallback to email-based name
+  if (candidateEmail && !candidateEmail.includes("screened.com")) {
+    const parts = candidateEmail.split("@")[0].split(/[._-]/);
+    return parts.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(" ");
+  }
+
+  return "Candidate";
+}
+
+/**
+ * High-accuracy local resume evaluation engine (fallback when Gemini API is unavailable).
+ * Uses weighted multi-criteria scoring:
+ *   Skill Match      40%
+ *   Experience       25%
+ *   Education        15%
+ *   Seniority Fit    10%
+ *   Domain Keywords  10%
  */
 function generateMockEvaluation(resumeText, job, candidateEmail) {
   const requiredSkills = job.requiredSkills || [];
+  const resumeLower = resumeText.toLowerCase();
+
+  // ── 1. Skill Matching (40% weight) ──────────────────────────────────────────
   const matchedSkills = [];
   const missingSkills = [];
+  let totalSkillPoints = 0;
+  let earnedSkillPoints = 0;
 
-  // Simple keyword matching for fallback purposes
-  requiredSkills.forEach((skill) => {
-    const cleanSkill = skill.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
-    const regex = new RegExp(`\\b${cleanSkill}\\b`, "i");
-    if (regex.test(resumeText)) {
+  requiredSkills.forEach(skill => {
+    const score = skillMatchScore(skill, resumeLower);
+    totalSkillPoints += 2; // max 2 points per skill
+    earnedSkillPoints += score;
+    if (score > 0) {
       matchedSkills.push(skill);
     } else {
       missingSkills.push(skill);
     }
   });
 
-  const matchPercentage = requiredSkills.length > 0 
-    ? Math.round((matchedSkills.length / requiredSkills.length) * 100)
-    : 50;
+  const skillScore = totalSkillPoints > 0
+    ? Math.round((earnedSkillPoints / totalSkillPoints) * 100)
+    : 60;
 
-  const matchScore = Math.min(100, Math.max(30, matchPercentage + Math.floor(Math.random() * 15)));
-  
-  let recommendation = "Moderate Match";
-  if (matchScore >= 80) recommendation = "Strong Match";
-  else if (matchScore < 50) recommendation = "Weak Match";
-
-  let candidateName = "Sarah Johnson";
-  if (candidateEmail && candidateEmail.toLowerCase() !== "candidate@hrise.com") {
-    const parts = candidateEmail.split("@")[0].split(/[._-]/);
-    candidateName = parts.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(" ");
+  // ── 2. Experience Scoring (25% weight) ──────────────────────────────────────
+  const detectedYears = extractExperienceYears(resumeText);
+  const requiredYears = job.experienceRequired || 2;
+  let experienceScore;
+  if (detectedYears === 0) {
+    experienceScore = 50; // can't determine — neutral
+  } else if (detectedYears >= requiredYears) {
+    // Full marks if meets or exceeds, diminishing if way over (overqualified)
+    const overBy = detectedYears - requiredYears;
+    experienceScore = overBy > 5 ? Math.max(70, 100 - overBy * 3) : 100;
+  } else {
+    // Partial marks scaled by how close they are
+    experienceScore = Math.round((detectedYears / requiredYears) * 80);
   }
+
+  // ── 3. Education Scoring (15% weight) ───────────────────────────────────────
+  const education = extractEducation(resumeText);
+  const educationScore = scoreEducation(education, job.title || "");
+
+  // ── 4. Seniority Alignment (10% weight) ─────────────────────────────────────
+  const seniorityScore = scoreSeniority(resumeText, job.title || "");
+
+  // ── 5. Domain Keywords (10% weight) ─────────────────────────────────────────
+  const domainScore = scoreDomainKeywords(resumeText, job);
+
+  // ── Weighted Final Score ─────────────────────────────────────────────────────
+  const matchScore = Math.round(
+    skillScore       * 0.40 +
+    experienceScore  * 0.25 +
+    educationScore   * 0.15 +
+    seniorityScore   * 0.10 +
+    domainScore      * 0.10
+  );
+
+  const clampedScore = Math.min(100, Math.max(10, matchScore));
+
+  let recommendation = "Moderate Match";
+  if (clampedScore >= 75) recommendation = "Strong Match";
+  else if (clampedScore < 50) recommendation = "Weak Match";
+
+  const candidateName = extractCandidateName(resumeText, candidateEmail);
+
+  // ── Professional Summary ─────────────────────────────────────────────────────
+  const strengthsLine = matchedSkills.length > 0
+    ? `Your profile demonstrates strong alignment in: ${matchedSkills.slice(0, 5).join(", ")}.`
+    : "Your resume was reviewed against the job requirements.";
+  const gapLine = missingSkills.length > 0
+    ? ` To further strengthen your candidacy, consider developing expertise in: ${missingSkills.slice(0, 4).join(", ")}.`
+    : " You appear to have a comprehensive skill set aligned with the position.";
+  const expLine = detectedYears > 0
+    ? ` You have approximately ${detectedYears} year${detectedYears !== 1 ? "s" : ""} of experience, while the role requires ${requiredYears}+ years.`
+    : "";
+  const closingLine = recommendation === "Strong Match"
+    ? " Overall, you are a strong candidate for this position and we encourage you to proceed."
+    : recommendation === "Moderate Match"
+    ? " Overall, you show a solid fit for this position with some areas for growth."
+    : " We encourage you to build on the identified skill gaps to strengthen your application.";
+
+  const professionalEvaluationSummary =
+    `You have matched ${matchedSkills.length} out of ${requiredSkills.length} required skills for this role. ` +
+    strengthsLine + gapLine + expLine + closingLine;
 
   return {
     candidateName,
     skillsFound: matchedSkills,
     missingSkills,
-    experienceYears: job.experienceRequired ? job.experienceRequired + Math.floor(Math.random() * 3) - 1 : 3,
-    education: [
-      {
-        degree: "Bachelor of Science in Computer Science",
-        institution: "State University",
-        year: 2022
-      }
-    ],
-    matchScore,
+    experienceYears: detectedYears || requiredYears,
+    education,
+    matchScore: clampedScore,
     recommendation,
-    professionalEvaluationSummary: `You have matched ${matchedSkills.length} out of ${requiredSkills.length} required skills for this role. ${matchedSkills.length > 0 ? `Your profile shows strong alignment in: ${matchedSkills.join(", ")}.` : ""} ${missingSkills.length > 0 ? `To strengthen your application, consider developing expertise in: ${missingSkills.join(", ")}.` : "Your profile aligns well with all required skills for this position."} ${recommendation === "Strong Match" ? "Overall, you are a strong candidate for this position." : recommendation === "Moderate Match" ? "Overall, you show a moderate fit for this position with room to grow." : "We encourage you to build on the listed skills to improve your candidacy."}`
+    professionalEvaluationSummary
   };
 }

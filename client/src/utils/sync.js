@@ -36,8 +36,10 @@ export async function syncFromBackend() {
 
     console.log("✅ MERN Sync: Local cache matches MongoDB.");
     
-    // Dispatch standard storage event so all mounted pages update their state
-    window.dispatchEvent(new Event("storage"));
+    // Dispatch a custom event instead of the generic 'storage' event.
+    // Dispatching 'storage' causes pages listening to it to call loadData() -> API POST ->
+    // hrise_dashboard_refresh -> loadData() again, creating an infinite loop.
+    window.dispatchEvent(new Event("hrise_sync_complete"));
   } catch (e) {
     console.error("❌ MERN Sync failed:", e);
   }

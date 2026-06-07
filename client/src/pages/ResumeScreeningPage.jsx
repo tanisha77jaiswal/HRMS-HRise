@@ -14,15 +14,11 @@ import {
   Download,
   Search,
   ArrowRightLeft,
-  UserPlus,
   Trash2,
   Video,
 } from "lucide-react";
 import { Card, Button, Badge } from "../components/ui";
 import { addHriseNotification } from "../utils/notifications";
-import { HiringPredictionCard } from "../components/HiringPrediction";
-
-import { syncPush } from "../utils/sync";
 
 export default function ResumeScreeningPage() {
   const { user } = useAuth();
@@ -41,7 +37,7 @@ export default function ResumeScreeningPage() {
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [selectedCandidates, setSelectedCandidates] = useState(new Set());
   const [filter, setFilter] = useState("all");
-  const [sortBy, setSortBy] = useState("score");
+  const [sortBy, setSortBy] = useState("date");
   const [searchQuery, setSearchQuery] = useState("");
   const [showDetail, setShowDetail] = useState(null);
   const [jdText, setJdText] = useState("");
@@ -71,24 +67,17 @@ export default function ResumeScreeningPage() {
     };
     loadData();
 
-    // Listen for refresh events to re-fetch
+    // Listen for refresh events to re-fetch (only explicit dashboard refresh, NOT storage events which loop)
     const handleRefresh = () => loadData();
     window.addEventListener("hrise_dashboard_refresh", handleRefresh);
-    window.addEventListener("storage", handleRefresh);
     return () => {
       window.removeEventListener("hrise_dashboard_refresh", handleRefresh);
-      window.removeEventListener("storage", handleRefresh);
     };
   }, []);
 
-  // Sync candidate state changes to backend
-  useEffect(() => {
-    if (candidates && candidates.length > 0) {
-      candidates.forEach((cand) => {
-        syncPush.candidates.create(cand);
-      });
-    }
-  }, [candidates]);
+  // NOTE: Candidate sync to backend is handled by the screenBulkResumes API call directly.
+  // We do NOT push all candidates on every state change — that would cause an infinite loop
+  // (POST -> hrise_dashboard_refresh event -> loadData -> setCandidates -> POST -> ...).
 
   // Sync JD text when selected job changes
   useEffect(() => {
@@ -139,6 +128,11 @@ export default function ResumeScreeningPage() {
       setAnalysisProgress(100);
 
       const newCandidates = response.candidates || [];
+
+      // Reset file input so the same file can be uploaded again
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
 
       setTimeout(() => {
         setAnalyzing(false);
@@ -298,10 +292,14 @@ export default function ResumeScreeningPage() {
     )
     .sort((a, b) => {
       if (sortBy === "score") return b.aiScore - a.aiScore;
-      if (sortBy === "date")
-        return (
-          new Date(b.appliedDate).getTime() - new Date(a.appliedDate).getTime()
-        );
+      if (sortBy === "date") {
+        // createdAt is set by Mongoose timestamps (most precise) → appliedDate fallback → _id tiebreaker
+        const aTime = new Date(a.createdAt || a.appliedDate || 0).getTime();
+        const bTime = new Date(b.createdAt || b.appliedDate || 0).getTime();
+        if (bTime !== aTime) return bTime - aTime;
+        // MongoDB ObjectId encodes insertion millisecond — lexicographic comparison works correctly
+        return (b._id || "") > (a._id || "") ? -1 : 1;
+      }
       return b.matchPercentage - a.matchPercentage;
     });
 

@@ -13,7 +13,7 @@ const CandidateSchema = new mongoose.Schema({
   ],
   aiScore: { type: Number, default: 0 },
   status: { type: String, default: "applied" },
-  appliedDate: { type: String, required: true },
+  appliedDate: { type: Date, required: true, default: Date.now },
   matchPercentage: { type: Number, default: 0 },
   matchExplanation: { type: String },
   resumeFile: { type: String },
@@ -22,7 +22,7 @@ const CandidateSchema = new mongoose.Schema({
   interviewScheduled: { type: Boolean, default: false },
   interviewCompleted: { type: Boolean, default: false },
   screenedByHR: { type: Boolean, default: false },
-});
+}, { timestamps: true });
 
 const CandidateProfileSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
