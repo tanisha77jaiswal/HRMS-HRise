@@ -340,3 +340,7 @@ Lovely Professional University
 ⭐ If you like this project, consider giving it a star.
 
 </div>
+
+© 2026 Tanisha Jaiswal. All Rights Reserved.
+
+This project was developed as part of the AI-Based HR Module Hackathon. Unauthorized copying, modification, distribution, or use of this code without permission is prohibited.
