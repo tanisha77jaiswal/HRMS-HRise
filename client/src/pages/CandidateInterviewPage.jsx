@@ -376,6 +376,7 @@ export default function CandidateInterviewPage() {
     setActiveSpeechText("");
 
     const targetQuestionId = currentQ.id;
+    const chunks = [];
 
     const options = {
       mimeType: "video/webm;codecs=vp8,opus",
