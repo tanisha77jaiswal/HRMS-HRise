@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Brain, TrendingUp, Shield, Sparkles, AlertTriangle, Loader2, BarChart3 } from "lucide-react";
 import { api } from "../utils/api";
 
@@ -298,9 +298,15 @@ export function MLAnalyticsPanel({ candidates }) {
   const [loading, setLoading] = useState(false);
   const [mlHealthy, setMlHealthy] = useState(null);
 
-  const eligibleCandidates = candidates ? candidates.filter(
+  const eligibleCandidates = useMemo(() => candidates ? candidates.filter(
     (c) => c.aiScore != null && c.aiScore > 0 && c.interviewScore != null && c.interviewScore > 0
-  ) : [];
+  ) : [], [candidates]);
+
+  // Stable fingerprint so the effect only re-runs when eligible data actually changes
+  const eligibleFingerprint = useMemo(() =>
+    eligibleCandidates.map(c => `${c.id}:${c.aiScore}:${c.interviewScore}`).join("|"),
+    [eligibleCandidates]
+  );
 
   const skippedCount = candidates ? candidates.length - eligibleCandidates.length : 0;
 
@@ -323,7 +329,7 @@ export function MLAnalyticsPanel({ candidates }) {
     } else {
       setPredictions([]);
     }
-  }, [candidates, mlHealthy]);
+  }, [eligibleFingerprint, mlHealthy]);
 
   const fetchBatchPredictions = async () => {
     if (eligibleCandidates.length === 0) {
