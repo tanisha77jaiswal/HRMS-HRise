@@ -3,117 +3,36 @@ import { api } from "./api";
 // ─── Initial Synchronization on Boot ──────────────────────────────────────────
 export async function syncFromBackend() {
   try {
-    console.log("🔄 MERN Sync: Fetching data from MongoDB...");
+    console.log("🔄 MERN Sync: Fetching data from MongoDB in parallel...");
 
-    // 1. Jobs
-    try {
-      const jobs = await api.jobs.getAll();
-      if (Array.isArray(jobs)) {
-        localStorage.setItem("hrise_jobs", JSON.stringify(jobs));
-      }
-    } catch (e) {
-      console.warn("MERN Sync: Failed to sync jobs", e);
-    }
+    const syncTasks = [
+      { key: "hrise_jobs", fetch: () => api.jobs.getAll() },
+      { key: "hrise_candidates", fetch: () => api.candidates.getAll() },
+      { key: "hrise_interview_sessions", fetch: () => api.interviews.getAll() },
+      { key: "hrise_onboarding_records", fetch: () => api.onboarding.getAll() },
+      { key: "hrise_staff_profiles", fetch: () => api.staff.getAll() },
+      { key: "hrise_candidate_profiles", fetch: () => api.candidateProfiles.getAll() },
+      { key: "hrise_workspace_settings", fetch: () => api.settings.get() },
+      { key: "hrise_attendance_data", fetch: () => api.attendance.get() },
+      { key: "hrise_payroll_data", fetch: () => api.payroll.get() },
+      { key: "hrise_performance_data", fetch: () => api.performance.get() },
+      { key: "hrise_leaves_data", fetch: () => api.leaves.getAll() },
+      { key: "hrise_performance_reviews", fetch: () => api.performance.getReviews() }
+    ];
 
-    // 2. Candidates
-    try {
-      const candidates = await api.candidates.getAll();
-      if (Array.isArray(candidates)) {
-        localStorage.setItem("hrise_candidates", JSON.stringify(candidates));
-      }
-    } catch (e) {
-      console.warn("MERN Sync: Failed to sync candidates", e);
-    }
+    const results = await Promise.allSettled(syncTasks.map(t => t.fetch()));
 
-    // 3. Interview Sessions
-    try {
-      const interviews = await api.interviews.getAll();
-      if (Array.isArray(interviews)) {
-        localStorage.setItem("hrise_interview_sessions", JSON.stringify(interviews));
+    results.forEach((res, idx) => {
+      const task = syncTasks[idx];
+      if (res.status === "fulfilled" && res.value) {
+        const data = res.value;
+        if (Array.isArray(data) || (data && typeof data === "object")) {
+          localStorage.setItem(task.key, JSON.stringify(data));
+        }
+      } else if (res.status === "rejected") {
+        console.warn(`MERN Sync: Failed to sync ${task.key}:`, res.reason);
       }
-    } catch (e) {
-      console.warn("MERN Sync: Failed to sync interviews", e);
-    }
-
-    // 4. Onboarding Records
-    try {
-      const onboarding = await api.onboarding.getAll();
-      if (Array.isArray(onboarding)) {
-        localStorage.setItem("hrise_onboarding_records", JSON.stringify(onboarding));
-      }
-    } catch (e) {
-      console.warn("MERN Sync: Failed to sync onboarding records", e);
-    }
-
-    // 5. Staff Profiles
-    try {
-      const staff = await api.staff.getAll();
-      if (Array.isArray(staff)) {
-        localStorage.setItem("hrise_staff_profiles", JSON.stringify(staff));
-      }
-    } catch (e) {
-      console.warn("MERN Sync: Failed to sync staff profiles", e);
-    }
-
-    // 6. Candidate Profiles
-    try {
-      const candidateProfiles = await api.candidateProfiles.getAll();
-      if (Array.isArray(candidateProfiles)) {
-        localStorage.setItem("hrise_candidate_profiles", JSON.stringify(candidateProfiles));
-      }
-    } catch (e) {
-      console.warn("MERN Sync: Failed to sync candidate profiles", e);
-    }
-
-    // 7. Workspace Settings
-    try {
-      const settings = await api.settings.get();
-      if (settings) {
-        localStorage.setItem("hrise_workspace_settings", JSON.stringify(settings));
-      }
-    } catch (e) {
-      console.warn("MERN Sync: Failed to sync workspace settings", e);
-    }
-
-    // 8. Attendance
-    try {
-      const attendance = await api.attendance.get();
-      if (attendance) {
-        localStorage.setItem("hrise_attendance_data", JSON.stringify(attendance));
-      }
-    } catch (e) { console.error("Sync attendance failed", e); }
-
-    // 9. Payroll
-    try {
-      const payroll = await api.payroll.get();
-      if (payroll) {
-        localStorage.setItem("hrise_payroll_data", JSON.stringify(payroll));
-      }
-    } catch (e) { console.error("Sync payroll failed", e); }
-
-    // 10. Performance
-    try {
-      const performance = await api.performance.get();
-      if (performance) {
-        localStorage.setItem("hrise_performance_data", JSON.stringify(performance));
-      }
-    } catch (e) { console.error("Sync performance failed", e); }
-
-    // 11. Leaves
-    try {
-      const leaves = await api.leaves.getAll();
-      if (Array.isArray(leaves)) {
-        localStorage.setItem("hrise_leaves_data", JSON.stringify(leaves));
-      }
-    } catch (e) { console.error("Sync leaves failed", e); }
-
-    // 12. Performance Reviews
-    try {
-      const reviews = await api.performance.getReviews();
-      if (Array.isArray(reviews)) {
-        localStorage.setItem("hrise_performance_reviews", JSON.stringify(reviews));
-      }
-    } catch (e) { console.error("Sync performance reviews failed", e); }
+    });
 
     console.log("✅ MERN Sync: Local cache matches MongoDB.");
     

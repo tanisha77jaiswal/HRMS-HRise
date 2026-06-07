@@ -29,7 +29,7 @@ const PORT = process.env.NODE_ENV === "production" ? (process.env.PORT || 5000) 
 
 // Enable CORS - strictly restrict to port 5173 locally
 const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(",")
+  ? process.env.ALLOWED_ORIGINS.split(",").map(origin => origin.trim().replace(/\/$/, ""))
   : ["http://localhost:5173", "http://127.0.0.1:5173"];
 
 app.use(cors({

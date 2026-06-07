@@ -132,13 +132,27 @@ export const getDashboardData = async (req, res) => {
     const presentEmails = new Set(todayRecords.filter(r => r.status === "Present").map(r => r.employeeEmail.toLowerCase()));
     const leaveEmails = new Set(todayRecords.filter(r => r.status === "On Leave").map(r => r.employeeEmail.toLowerCase()));
 
+    // Pre-fetch all past attendance records for active staff to avoid N+1 query in loop
+    const allPastRecords = await AttendanceRecord.find({
+      employeeEmail: { $in: activeEmails }
+    }).sort({ date: -1 });
+
+    const recordsMap = {};
+    allPastRecords.forEach(rec => {
+      if (rec.employeeEmail) {
+        const email = rec.employeeEmail.toLowerCase();
+        if (!recordsMap[email]) {
+          recordsMap[email] = [];
+        }
+        recordsMap[email].push(rec);
+      }
+    });
+
     const absentToday = [];
     for (let s of activeStaff) {
       const email = s.email.toLowerCase();
       if (!presentEmails.has(email) && !leaveEmails.has(email)) {
-        const pastRecords = await AttendanceRecord.find({
-          employeeEmail: email
-        }).sort({ date: -1 });
+        const pastRecords = recordsMap[email] || [];
 
         let consecutive = 1;
         for (let rec of pastRecords) {

@@ -1,6 +1,21 @@
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000/api";
+let API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000/api";
+// Ensure API_BASE ends with /api
+if (API_BASE && !API_BASE.endsWith("/api") && !API_BASE.endsWith("/api/")) {
+  API_BASE = API_BASE.replace(/\/$/, "") + "/api";
+}
 
 const request = async (url, options = {}) => {
+  if (
+    typeof window !== "undefined" &&
+    window.location.hostname !== "localhost" &&
+    window.location.hostname !== "127.0.0.1" &&
+    API_BASE.includes("localhost")
+  ) {
+    throw new Error(
+      "Configuration Error: The frontend is deployed, but is trying to connect to a local backend (http://localhost:5000). Please set VITE_API_BASE in your Vercel environment variables to your Render backend API URL (e.g. https://your-backend.onrender.com/api) and re-deploy."
+    );
+  }
+
   try {
     const token = localStorage.getItem("hrise_jwt_token");
     const headers = {
