@@ -323,11 +323,15 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data)
     }),
-    checkIn: () => request(`${API_BASE}/employee-dashboard/check-in`, {
-      method: "POST"
+    checkIn: (data) => request(`${API_BASE}/employee-dashboard/check-in`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
     }),
-    checkOut: () => request(`${API_BASE}/employee-dashboard/check-out`, {
-      method: "POST"
+    checkOut: (data) => request(`${API_BASE}/employee-dashboard/check-out`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
     }),
     logPayslipDownload: (month) => request(`${API_BASE}/employee-dashboard/log-payslip-download`, {
       method: "POST",

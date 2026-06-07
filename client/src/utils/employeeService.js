@@ -46,7 +46,14 @@ export const employeeService = {
 
   checkIn: async (email) => {
     try {
-      await api.employeeDashboard.checkIn();
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const localDate = `${year}-${month}-${day}`;
+      const localTime = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+
+      await api.employeeDashboard.checkIn({ localDate, localTime });
       const res = await api.employeeDashboard.get();
       return res.attendance;
     } catch (e) {
@@ -57,7 +64,14 @@ export const employeeService = {
 
   checkOut: async (email) => {
     try {
-      await api.employeeDashboard.checkOut();
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const localDate = `${year}-${month}-${day}`;
+      const localTime = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+
+      await api.employeeDashboard.checkOut({ localDate, localTime });
       const res = await api.employeeDashboard.get();
       return res.attendance;
     } catch (e) {

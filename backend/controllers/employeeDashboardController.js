@@ -304,7 +304,8 @@ export const updateEmployeeProfile = async (req, res) => {
 export const employeeCheckIn = async (req, res) => {
   try {
     const email = req.user.email.toLowerCase();
-    const todayStr = new Date().toISOString().split("T")[0];
+    const { localDate, localTime } = req.body;
+    const todayStr = localDate || new Date().toISOString().split("T")[0];
 
     let record = await AttendanceRecord.findOne({ employeeEmail: email, date: todayStr });
     if (record) {
@@ -312,7 +313,7 @@ export const employeeCheckIn = async (req, res) => {
     }
 
     const now = new Date();
-    const timeStr = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+    const timeStr = localTime || now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
 
     // Fetch profile for name and dept
     const profile = await StaffProfile.findOne({ email });
@@ -344,7 +345,8 @@ export const employeeCheckIn = async (req, res) => {
 export const employeeCheckOut = async (req, res) => {
   try {
     const email = req.user.email.toLowerCase();
-    const todayStr = new Date().toISOString().split("T")[0];
+    const { localDate, localTime } = req.body;
+    const todayStr = localDate || new Date().toISOString().split("T")[0];
 
     const record = await AttendanceRecord.findOne({ employeeEmail: email, date: todayStr });
     if (!record) {
@@ -355,7 +357,7 @@ export const employeeCheckOut = async (req, res) => {
     }
 
     const now = new Date();
-    const timeStr = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+    const timeStr = localTime || now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
     
     record.checkOut = timeStr;
     record.hours = calculateHours(record.checkIn, timeStr);
