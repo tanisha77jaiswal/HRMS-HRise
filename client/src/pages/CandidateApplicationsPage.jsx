@@ -53,7 +53,7 @@ export default function CandidateApplicationsPage() {
 
   const filteredApplications = myApplications.filter((app) => {
     const associatedJob = jobs.find((j) => j.id === app.jobId);
-    const roleTitle = associatedJob ? associatedJob.title : "Software Engineer";
+    const roleTitle = associatedJob ? associatedJob.title : (app.jobTitle || "Software Engineer");
     return (
       roleTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
       app.status.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -208,7 +208,7 @@ export default function CandidateApplicationsPage() {
               {filteredApplications.length > 0 ? (
                 filteredApplications.map((app) => {
                   const associatedJob = jobs.find((j) => j.id === app.jobId);
-                  const roleTitle = associatedJob ? associatedJob.title : "Software Engineer";
+                  const roleTitle = associatedJob ? associatedJob.title : (app.jobTitle || "Software Engineer");
                   return (
                     <Card key={app.id} className="p-6 border border-gray-200 shadow-sm rounded-xl">
                       <div className="flex flex-col sm:flex-row sm:items-center gap-4">

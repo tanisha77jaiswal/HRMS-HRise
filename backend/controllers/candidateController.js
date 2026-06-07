@@ -5,9 +5,18 @@ import { screenResume } from "../services/geminiService.js";
 
 export const getAllCandidates = async (req, res) => {
   try {
+    let query = {};
+    if (req.user && req.user.role !== "management_admin" && req.user.role !== "recruiter") {
+      query = {
+        $or: [
+          { email: req.user.email.toLowerCase() },
+          { name: { $regex: new RegExp(`^${req.user.name}$`, "i") } }
+        ]
+      };
+    }
     // Sort by _id descending: MongoDB ObjectId encodes insertion timestamp in first 4 bytes,
     // so _id: -1 always returns newest candidates first regardless of appliedDate format.
-    const list = await Candidate.find({}).sort({ _id: -1 });
+    const list = await Candidate.find(query).sort({ _id: -1 });
     res.json(list);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -155,6 +164,10 @@ export const applyForJob = async (req, res) => {
       candidateEmail
     );
 
+    // Fetch Job to get title and increment applicant count
+    const job = await Job.findOneAndUpdate({ id: jobId }, { $inc: { applicantCount: 1 } });
+    const jobTitle = job ? job.title : "Software Engineer";
+
     // 2. Build & save Candidate document
     const appliedDate = new Date(); // full timestamp so sort-by-date works correctly
     const newCandidate = new Candidate({
@@ -173,12 +186,9 @@ export const applyForJob = async (req, res) => {
       matchExplanation: aiEvaluation.professionalEvaluationSummary || "Application screened successfully.",
       resumeFile: file.originalname,
       jobId,
+      jobTitle,
     });
     await newCandidate.save();
-
-    // 3. Increment job applicant count
-    const job = await Job.findOneAndUpdate({ id: jobId }, { $inc: { applicantCount: 1 } });
-    const jobTitle = job ? job.title : "Software Engineer";
 
     const { createNotification } = await import("../services/notificationService.js");
     await createNotification({
@@ -218,6 +228,9 @@ export const screenBulkResumes = async (req, res) => {
     }
 
     console.log(`[Bulk Screen] HR screening ${files.length} resume(s) for job: ${jobId}`);
+
+    const job = await Job.findOne({ id: jobId });
+    const jobTitle = job ? job.title : "Software Engineer";
 
     const appliedDate = new Date(); // full timestamp so sort-by-date works correctly
 
@@ -268,6 +281,7 @@ export const screenBulkResumes = async (req, res) => {
           matchExplanation: aiEvaluation.professionalEvaluationSummary || "AI screening complete.",
           resumeFile: file.originalname,
           jobId,
+          jobTitle,
           screenedByHR: true,
         });
 

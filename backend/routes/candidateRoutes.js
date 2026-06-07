@@ -16,7 +16,7 @@ import { upload } from "../config/cloudinary.js";
 const router = express.Router();
 
 // HR / Admin routes
-router.get(   "/",           authenticateToken, requireRole(["management_admin", "recruiter"]), getAllCandidates);
+router.get(   "/",           authenticateToken, requireRole(["management_admin", "recruiter", "candidate"]), getAllCandidates);
 router.post(  "/",           authenticateToken, requireRole(["management_admin", "recruiter"]), createCandidate);
 router.post(  "/bulk",       authenticateToken, requireRole(["management_admin", "recruiter"]), bulkCreateCandidates);
 router.put(   "/:id",        authenticateToken, requireRole(["management_admin", "recruiter"]), updateCandidate);
