@@ -414,7 +414,7 @@ export default function ResumeScreeningPage() {
     <div className="min-h-screen bg-gray-50">
       <Sidebar role={role} />
       <div className="lg:ml-64">
-        <Header title="Resume Screening" searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+        <Header title="Resume Screening and Hiring" searchQuery={searchQuery} onSearchChange={setSearchQuery} />
         <main className="p-4 sm:p-6 lg:p-8">
           {!isHRAdmin && (
             <div className="flex items-center gap-3 mb-5 px-4 py-3 bg-amber-50 border border-amber-200 rounded-2xl">
@@ -430,7 +430,7 @@ export default function ResumeScreeningPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                AI Resume Screening
+                AI Resume Screening and Hiring
               </h1>
               <p className="text-gray-500 mt-1">
                 Upload resumes and let AI score & rank candidates

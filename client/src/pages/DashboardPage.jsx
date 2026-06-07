@@ -466,10 +466,10 @@ export default function DashboardPage() {
                   </div>
                   <p className="font-bold text-gray-800 text-sm">No candidates yet</p>
                   <p className="text-xs text-gray-400 mt-1.5 max-w-xs leading-relaxed">
-                    Upload resumes on the <strong>Resume Screening</strong> page to populate the hiring pipeline.
+                    Upload resumes on the <strong>Resume Screening and Hiring</strong> page to populate the hiring pipeline.
                   </p>
                   <Link to="/resumes" className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl hover:bg-indigo-700 transition-colors">
-                    <FileText size={12} /> Go to Resume Screening
+                    <FileText size={12} /> Go to Resume Screening and Hiring
                   </Link>
                 </div>
               ) : (

@@ -34,7 +34,7 @@ const managementAdminNav = [
 
 const recruiterNav = [
   { label: "Dashboard", path: "/dashboard", icon: <LayoutDashboard size={20} /> },
-  { label: "Resume Screening", path: "/resumes", icon: <FileText size={20} /> },
+  { label: "Resume Screening and Hiring", path: "/resumes", icon: <FileText size={20} /> },
   { label: "Video Interviews", path: "/interviews", icon: <Video size={20} /> },
   { label: "Analytics", path: "/analytics", icon: <BarChart3 size={20} /> },
   { label: "Job Descriptions", path: "/job-descriptions", icon: <Briefcase size={20} /> },
