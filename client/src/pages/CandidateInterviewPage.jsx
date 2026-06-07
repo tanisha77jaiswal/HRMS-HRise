@@ -38,6 +38,15 @@ function formatScheduledDate(dateStr) {
   });
 }
 
+const blobToBase64 = (blob) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+};
+
 function StatusPill({ status }) {
   const map = {
     scheduled: {
@@ -307,7 +316,11 @@ export default function CandidateInterviewPage() {
         streamRef.current.getTracks().forEach((t) => t.stop());
       }
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
+        video: {
+          width: { ideal: 320 },
+          height: { ideal: 240 },
+          frameRate: { ideal: 15 }
+        },
         audio: true,
       });
       streamRef.current = stream;
@@ -365,8 +378,18 @@ export default function CandidateInterviewPage() {
 
     const targetQuestionId = currentQ.id;
 
-    const chunks = [];
-    const recorder = new MediaRecorder(streamRef.current);
+    const options = {
+      mimeType: "video/webm;codecs=vp8,opus",
+      videoBitsPerSecond: 150000,
+      audioBitsPerSecond: 32000,
+    };
+    let recorder;
+    try {
+      recorder = new MediaRecorder(streamRef.current, options);
+    } catch (e) {
+      console.warn("Failed to create MediaRecorder with options, using default:", e);
+      recorder = new MediaRecorder(streamRef.current);
+    }
     mediaRecorderRef.current = recorder;
 
     let localRecordingTime = 0;
@@ -408,7 +431,7 @@ export default function CandidateInterviewPage() {
       if (e.data && e.data.size > 0) chunks.push(e.data);
     };
 
-    recorder.onstop = () => {
+    recorder.onstop = async () => {
       if (recognitionRef.current) {
         try { recognitionRef.current.stop(); } catch (e) {}
       }
@@ -416,7 +439,15 @@ export default function CandidateInterviewPage() {
       const videoUrl = URL.createObjectURL(blob);
       const cacheKey = `${targetQuestionId}_candidate`;
       if (!window.__hrise_video_blobs) window.__hrise_video_blobs = {};
-      window.__hrise_video_blobs[cacheKey] = videoUrl;
+      window.__hrise_video_blobs[cacheKey] = ""; // placeholder
+
+      try {
+        const base64 = await blobToBase64(blob);
+        window.__hrise_video_blobs[cacheKey] = base64;
+      } catch (err) {
+        console.error("Failed to convert blob to base64, falling back to local URL:", err);
+        window.__hrise_video_blobs[cacheKey] = videoUrl;
+      }
 
       // Only use what was actually spoken — never inject fake text
       const finalSpeechText = localSpeechText.trim();
