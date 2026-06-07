@@ -489,7 +489,7 @@ export function MLAnalyticsPanel({ candidates }) {
             {/* Top Candidates */}
             {topCandidates.length > 0 && (
               <div>
-                <p className="text-[11px] font-bold text-gray-500 mb-2">Top Recommended Candidates</p>
+                <p className="text-[11px] font-bold text-gray-500 mb-2">Top Ranked Candidates</p>
                 <div className="space-y-1.5">
                   {topCandidates.map((tc, i) => (
                     <div key={tc.candidateId} className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors">
