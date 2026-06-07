@@ -57,7 +57,7 @@ export default function LoginPage() {
     {
       icon: <Brain size={20} />,
       title: "AI Resume Screening & Parsing",
-      desc: "Gemini-powered semantic parsing and matching with automatic skill gap identification.",
+      desc: "AI-powered semantic parsing and matching with automatic skill gap identification.",
       color: "#6366f1"
     },
     {
@@ -1013,7 +1013,7 @@ export default function LoginPage() {
                 <Sparkles size={11} /> NLP Resume Parsing
               </span>
               <span className="cap-badge">
-                <Brain size={11} /> Gemini Evaluation
+                <Brain size={11} /> AI Evaluation
               </span>
               <span className="cap-badge">
                 <Video size={11} /> Voice &amp; Speech Sentiment
@@ -1614,7 +1614,7 @@ export default function LoginPage() {
                       role: "recruiter",
                       name: "HR Recruiter",
                       user: "Kavya Reddy",
-                      desc: "Manage candidate pipelines, publish jobs, and trigger Gemini AI resume scoring.",
+                      desc: "Manage candidate pipelines, publish jobs, and trigger AI resume scoring.",
                       icon: <Briefcase size={14} />,
                       color: "#2563eb",
                       bg: "#dbeafe",

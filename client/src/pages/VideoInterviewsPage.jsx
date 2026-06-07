@@ -288,7 +288,7 @@ export default function VideoInterviewsPage() {
 
     addHriseNotification(
       "Interview Scheduled",
-      `An AI video interview with ${generatedQuestions.length} ${questionSource === "gemini" ? "Gemini AI-generated" : "tailored"} questions has been scheduled for ${candName} — Role: ${jobTitle}.`,
+      `An AI video interview with ${generatedQuestions.length} ${questionSource === "gemini" ? "AI-generated" : "tailored"} questions has been scheduled for ${candName} — Role: ${jobTitle}.`,
       "interview",
       "recruiter"
     );
@@ -1076,7 +1076,7 @@ export default function VideoInterviewsPage() {
                       {generatingQuestions ? (
                         <>
                           <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                          Generating with Gemini AI...
+                          Generating with AI...
                         </>
                       ) : (
                         <>

@@ -1234,7 +1234,7 @@ export default function OnboardingPage() {
                                     disabled={isGeneratingOffer}
                                     className="w-full py-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold rounded-xl transition cursor-pointer text-center text-[10px] flex items-center justify-center gap-1 shadow-sm disabled:opacity-50"
                                   >
-                                    <Sparkles size={11} /> {isGeneratingOffer ? "Generating with Gemini AI..." : "Generate AI Offer Letter"}
+                                    <Sparkles size={11} /> {isGeneratingOffer ? "Generating with AI..." : "Generate AI Offer Letter"}
                                   </button>
 
                                   {offerLetterPreviewText && (
