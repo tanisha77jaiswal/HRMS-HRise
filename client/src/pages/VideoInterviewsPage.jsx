@@ -548,20 +548,15 @@ export default function VideoInterviewsPage() {
                             <div>
                               {(() => {
                                 const activeAns = selectedSession.answers.find((a) => a.questionId === activeQuestionId);
-                                const hasRecordedVideo = !!(window.__hrise_video_blobs?.[`${activeQuestionId}_candidate`] || activeAns?.videoUrl);
+                                const localBlob = window.__hrise_video_blobs?.[`${activeQuestionId}_candidate`];
+                                const hasRecordedVideo = !!(localBlob || activeAns?.videoUrl);
+                                const isStaleBlob = !localBlob && activeAns?.videoUrl?.startsWith("blob:");
+                                const videoSrc = localBlob || (activeAns?.videoUrl && !isStaleBlob ? activeAns.videoUrl : getFallbackVideo(selectedSession.candidateName));
                                 return (
                                   <div className="relative aspect-video bg-black rounded-xl overflow-hidden shadow-lg border border-gray-800">
                                     <video
                                       ref={videoPlayerRef}
-                                      src={
-                                        window.__hrise_video_blobs?.[
-                                          `${activeQuestionId}_candidate`
-                                        ] ||
-                                        activeAns?.videoUrl ||
-                                        getFallbackVideo(
-                                          selectedSession.candidateName,
-                                        )
-                                      }
+                                      src={videoSrc}
                                       controls
                                       className="w-full h-full object-cover"
                                       onTimeUpdate={() => {
@@ -578,9 +573,9 @@ export default function VideoInterviewsPage() {
                                     />
 
                                     {/* Overlay tag */}
-                                    <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-[10px] font-bold text-white flex items-center gap-1">
-                                      <span className={`w-1.5 h-1.5 rounded-full ${hasRecordedVideo ? "bg-emerald-500 animate-pulse" : "bg-amber-500"}`} />
-                                      {hasRecordedVideo ? "LIVE RECORDED ATTEMPT" : "DEMO VIDEO"}
+                                    <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-xl text-[10px] font-bold text-white flex items-center gap-1.5 shadow-sm">
+                                      <span className={`w-2 h-2 rounded-full ${hasRecordedVideo ? "bg-emerald-500 animate-pulse" : "bg-amber-500"}`} />
+                                      {hasRecordedVideo ? (isStaleBlob ? "LIVE ATTEMPT (DEMO FALLBACK)" : "LIVE RECORDED ATTEMPT") : "DEMO VIDEO"}
                                     </div>
                                   </div>
                                 );
@@ -640,10 +635,17 @@ export default function VideoInterviewsPage() {
                                     );
                                   })
                                 ) : (
-                                  <p className="text-xs text-gray-400 italic">
-                                    No transcript recorded yet for this
-                                    question.
-                                  </p>
+                                  selectedSession.status === "completed" || selectedSession.status === "analyzed" ? (
+                                    <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-700 flex items-center gap-2 font-medium">
+                                      <AlertCircle size={14} className="text-amber-500 flex-shrink-0" />
+                                      <span>Answer not recorded by candidate</span>
+                                    </div>
+                                  ) : (
+                                    <p className="text-xs text-gray-400 italic">
+                                      No transcript recorded yet for this
+                                      question.
+                                    </p>
+                                  )
                                 )}
                               </div>
                             </div>
@@ -770,9 +772,18 @@ export default function VideoInterviewsPage() {
                                   )}
                                 </div>
                               ) : (
-                                <div className="ml-10 flex items-center gap-2 text-sm text-gray-400">
-                                  <Clock size={14} />
-                                  <span>Awaiting response</span>
+                                <div className="ml-10 flex items-center gap-2 text-sm">
+                                  {selectedSession.status === "completed" || selectedSession.status === "analyzed" ? (
+                                    <>
+                                      <AlertCircle size={14} className="text-amber-500" />
+                                      <span className="text-amber-600 font-medium">Answer not recorded by candidate</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Clock size={14} className="text-gray-400" />
+                                      <span className="text-gray-400">Awaiting response</span>
+                                    </>
+                                  )}
                                 </div>
                               )}
                             </div>
